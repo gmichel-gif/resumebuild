@@ -1076,101 +1076,206 @@ addExpEntry();
 async function generatePDF() {
     const { jsPDF } = window.jspdf;
 
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
+    const name           = document.getElementById('name').value.trim();
+    const email          = document.getElementById('email').value.trim();
     if (!name || !email) { alert("Please fill in your Name and Email before downloading."); return; }
 
-    const phone         = document.getElementById('phone').value.trim();
-    const address       = document.getElementById('address').value.trim();
-    const objective     = document.getElementById('objective').value.trim();
-    const eduSchool     = document.getElementById('edu-school').value.trim();
-    const eduCity       = document.getElementById('edu-city').value.trim();
-    const eduGrade      = document.getElementById('edu-grade').value.trim();
-    const eduGpa        = document.getElementById('edu-gpa').value.trim();
-    const eduCourses    = document.getElementById('edu-courses').value.trim();
-    const eduActivities = document.getElementById('edu-activities').value.trim();
-    const customSkills  = document.getElementById('skills').value.trim();
+    const phone          = document.getElementById('phone').value.trim();
+    const address        = document.getElementById('address').value.trim();
+    const objective      = document.getElementById('objective').value.trim();
+    const eduSchool      = document.getElementById('edu-school').value.trim();
+    const eduCity        = document.getElementById('edu-city').value.trim();
+    const eduGrade       = document.getElementById('edu-grade').value.trim();
+    const eduGpa         = document.getElementById('edu-gpa').value.trim();
+    const eduCourses     = document.getElementById('edu-courses').value.trim();
+    const eduActivities  = document.getElementById('edu-activities').value.trim();
+    const customSkills   = document.getElementById('skills').value.trim();
     const certifications = document.getElementById('certifications').value.trim();
-    const expEntries    = getExpEntries();
+    const expEntries     = getExpEntries();
 
     const allSkills = [...selectedSkills];
     if (customSkills) customSkills.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>{ if(!allSkills.includes(s)) allSkills.push(s); });
 
-    const cinList = [...selectedCIN].map(p => `CI North — ${p}`);
+    const cinList        = [...selectedCIN].map(p => `CI North — ${p}`);
     const customCertList = certifications ? certifications.split('\n').map(s=>s.trim()).filter(Boolean) : [];
-    const allCerts = [...cinList, ...customCertList];
+    const allCerts       = [...cinList, ...customCertList];
 
-    // ── Page geometry ──────────────────────────────────────────────
-    const doc    = new jsPDF({ unit: 'pt', format: 'letter' });
+    // ── Page constants ─────────────────────────────────────────────
     const pageW  = 612;
     const pageH  = 792;
-    const mL     = 50;
-    const mR     = 50;
-    const mTop   = 50;
-    const mBot   = 44;
-    const cW     = pageW - mL - mR;   // content width: 512pt
-    let y        = mTop;
+    const mL     = 46;
+    const mR     = 46;
+    const mTop   = 48;
+    const mBot   = 48;
+    const cW     = pageW - mL - mR;   // 520 pt usable width
 
-    const BLACK  = [0, 0, 0];
-    const DARK   = [30, 30, 30];
-    const GRAY   = [100, 100, 100];
-    const LGRAY  = [180, 180, 180];
+    // ── Typography scale ───────────────────────────────────────────
+    const FS_NAME    = 30;   // student name
+    const FS_CONTACT = 11;   // contact line
+    const FS_SECTION = 20;   // section titles  (was 10 → doubled = 20)
+    const FS_ENTRY   = 14;   // entry bold heads (role, school)
+    const FS_BODY    = 12;   // all body text
+    const FS_SUB     = 11;   // secondary / gray text
 
-    function checkPage(needed) {
-        if (y + needed > pageH - mBot) {
-            doc.addPage();
-            y = mTop;
-        }
+    const LEAD_BODY  = 17;   // line-height for 12pt body
+    const LEAD_ENTRY = 18;   // line-height for entry heads
+    const LEAD_SUB   = 15;
+
+    const BLACK = [0,0,0];
+    const DARK  = [28,28,28];
+    const GRAY  = [105,105,105];
+    const LGRAY = [185,185,185];
+
+    // ── We'll render to a "tape" (list of draw commands) first,
+    //    then measure total height, compute extra spacing, and
+    //    replay with uniform gaps stretched to fill the page. ───────
+    // But for simplicity, we use a two-pass approach:
+    // Pass 1: collect sections as blocks with known heights.
+    // Pass 2: distribute blocks evenly on the page.
+
+    // ── jsPDF instance ─────────────────────────────────────────────
+    const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+
+    // ── Measure helpers (no drawing) ───────────────────────────────
+    function lineCount(text, maxW, fontSize) {
+        doc.setFontSize(fontSize);
+        return doc.splitTextToSize(text, maxW).length;
     }
 
-    // ── NAME ───────────────────────────────────────────────────────
+    // ── Height estimators per block type ──────────────────────────
+    // Each block = { type, data } → estimated height in pt
+    const blocks = [];
+
+    // Header block (name + rule + contact)
+    let headerH = FS_NAME + 10 + FS_CONTACT + 14; // name + gap + rule + contact + gap
+    blocks.push({ type:'header', h: headerH });
+
+    function sectionH(title) {
+        // pre-gap + title text + rule + post-gap
+        return 14 + FS_SECTION + 6 + 14;
+    }
+
+    function bodyH(text, fs, leading, maxW) {
+        if (!text) return 0;
+        doc.setFontSize(fs);
+        return doc.splitTextToSize(text, maxW).length * leading;
+    }
+
+    function bulletH(text, maxW) {
+        if (!text) return 0;
+        doc.setFontSize(FS_BODY);
+        return doc.splitTextToSize(text, maxW - 16).length * LEAD_BODY;
+    }
+
+    // Build content blocks list for height calculation
+    const contentBlocks = [];
+
+    if (objective) {
+        let h = sectionH('Professional Summary');
+        h += bodyH(objective, FS_BODY, LEAD_BODY, cW) + 6;
+        contentBlocks.push({ id:'objective', h });
+    }
+
+    if (allSkills.length > 0) {
+        let skillStr = allSkills.join('   •   ');
+        let h = sectionH('Skills');
+        h += bodyH(skillStr, FS_BODY, LEAD_BODY, cW) + 6;
+        contentBlocks.push({ id:'skills', h });
+    }
+
+    if (expEntries.length > 0) {
+        let h = sectionH('Experience');
+        expEntries.forEach((e, i) => {
+            if (e.role) h += LEAD_ENTRY;          // role line
+            if (e.start || e.end) h += LEAD_SUB;  // date line
+            if (e.desc) {
+                const bList = e.desc.split('\n').map(s=>s.trim()).filter(Boolean);
+                const sentences = bList.length > 1 ? bList :
+                    e.desc.split(/(?<=\.)\s+/).map(s=>s.trim()).filter(Boolean);
+                sentences.forEach(b => { h += bulletH(b, cW) + 2; });
+            }
+            if (i < expEntries.length - 1) h += 10;
+        });
+        h += 6;
+        contentBlocks.push({ id:'experience', h });
+    }
+
+    const hasEdu = eduSchool || eduGrade || eduGpa || eduCourses || eduActivities;
+    if (hasEdu) {
+        let h = sectionH('Education');
+        if (eduSchool) { h += LEAD_ENTRY; h += LEAD_SUB; }
+        if (eduGpa)    h += LEAD_BODY;
+        if (eduCourses) h += bodyH('Relevant Courses: '+eduCourses, FS_SUB, LEAD_SUB, cW) + 2;
+        if (eduActivities) h += bodyH('Activities: '+eduActivities, FS_SUB, LEAD_SUB, cW) + 2;
+        h += 6;
+        contentBlocks.push({ id:'education', h });
+    }
+
+    if (allCerts.length > 0) {
+        const rows = Math.ceil(allCerts.length / 2);
+        let h = sectionH('Certifications');
+        h += rows * (LEAD_BODY + 2) + 6;
+        contentBlocks.push({ id:'certifications', h });
+    }
+
+    // ── Compute total content height & extra space to distribute ───
+    const totalContentH = contentBlocks.reduce((s, b) => s + b.h, 0);
+    const usableH       = pageH - mTop - mBot - headerH;
+    const extra         = Math.max(0, usableH - totalContentH);
+    const gaps          = contentBlocks.length; // gaps between sections
+    const bonusPerGap   = gaps > 0 ? extra / gaps : 0;
+
+    // ── Draw pass ──────────────────────────────────────────────────
+    let y = mTop;
+
+    function checkPage(needed) {
+        if (y + needed > pageH - mBot) { doc.addPage(); y = mTop; }
+    }
+
+    // ── Draw NAME ─────────────────────────────────────────────────
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(26);
+    doc.setFontSize(FS_NAME);
     doc.setTextColor(...BLACK);
     doc.text(name, mL, y);
-    y += 6;
+    y += 8;
 
-    // thin rule under name
     doc.setDrawColor(...LGRAY);
     doc.setLineWidth(0.5);
     doc.line(mL, y, mL + cW, y);
     y += 10;
 
-    // ── CONTACT ROW ────────────────────────────────────────────────
     const contactParts = [phone, email, address].filter(Boolean);
     if (contactParts.length) {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
+        doc.setFontSize(FS_CONTACT);
         doc.setTextColor(...GRAY);
-        // space them evenly
-        const contactStr = contactParts.join('     ');
-        doc.text(contactStr, mL, y);
-        y += 16;
+        doc.text(contactParts.join('     •     '), mL, y);
+        y += 18;
     }
 
-    // ── SECTION HELPER ─────────────────────────────────────────────
-    function sectionTitle(title) {
-        checkPage(24);
-        y += 6;
+    // ── Section title draw ────────────────────────────────────────
+    function drawSectionTitle(title) {
+        checkPage(FS_SECTION + 20);
+        y += Math.round(bonusPerGap * 0.5); // half bonus before
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(FS_SECTION);
         doc.setTextColor(...BLACK);
         doc.text(title.toUpperCase(), mL, y);
-        y += 3;
+        y += 5;
         doc.setDrawColor(...BLACK);
-        doc.setLineWidth(1);
+        doc.setLineWidth(1.2);
         doc.line(mL, y, mL + cW, y);
-        y += 10;
+        y += 12 + Math.round(bonusPerGap * 0.5); // half bonus after
     }
 
-    // ── BODY TEXT HELPER ───────────────────────────────────────────
-    function bodyLine(text, opts={}) {
+    // ── Body text draw ────────────────────────────────────────────
+    function drawBody(text, opts={}) {
         if (!text) return;
-        const sz      = opts.size    || 9.5;
-        const leading = opts.leading || 13;
+        const fs      = opts.size    || FS_BODY;
+        const leading = opts.leading || LEAD_BODY;
         const indent  = opts.indent  || 0;
         doc.setFont('helvetica', opts.bold ? 'bold' : (opts.italic ? 'italic' : 'normal'));
-        doc.setFontSize(sz);
+        doc.setFontSize(fs);
         doc.setTextColor(...(opts.color || DARK));
         const lines = doc.splitTextToSize(text, cW - indent);
         checkPage(lines.length * leading);
@@ -1178,155 +1283,127 @@ async function generatePDF() {
         y += lines.length * leading + (opts.after || 0);
     }
 
-    // ── BULLET HELPER ──────────────────────────────────────────────
-    function bullet(text) {
+    // ── Bullet draw ───────────────────────────────────────────────
+    function drawBullet(text) {
         if (!text) return;
-        const indent = 14;
+        const indent = 16;
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9.5);
+        doc.setFontSize(FS_BODY);
         doc.setTextColor(...DARK);
         const lines = doc.splitTextToSize(text, cW - indent);
-        checkPage(lines.length * 13);
-        // bullet dot
+        checkPage(lines.length * LEAD_BODY + 2);
         doc.setFillColor(...DARK);
-        doc.circle(mL + 4, y - 3, 1.5, 'F');
+        doc.circle(mL + 5, y - 3.5, 2, 'F');
         doc.text(lines, mL + indent, y);
-        y += lines.length * 13;
+        y += lines.length * LEAD_BODY + 2;
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // PROFESSIONAL SUMMARY / OBJECTIVE
-    // ══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
+    // PROFESSIONAL SUMMARY
+    // ═══════════════════════════════════════════════════════════════
     if (objective) {
-        sectionTitle('Professional Summary');
-        bodyLine(objective, {size:9.5, leading:13, after:4});
+        drawSectionTitle('Professional Summary');
+        drawBody(objective, { after: 6 });
     }
 
-    // ══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     // SKILLS
-    // ══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     if (allSkills.length > 0) {
-        sectionTitle('Skills');
-        // Wrap skills into rows of pill-like tags separated by  •
-        const skillStr = allSkills.join('     •     ');
-        bodyLine(skillStr, {size:9.5, leading:14, after:2});
+        drawSectionTitle('Skills');
+        drawBody(allSkills.join('   •   '), { after: 6 });
     }
 
-    // ══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     // EXPERIENCE
-    // ══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     if (expEntries.length > 0) {
-        sectionTitle('Experience');
+        drawSectionTitle('Experience');
         expEntries.forEach((e, i) => {
-            checkPage(32);
-            // Role  BOLD  +  org, location  —  date range right-aligned
+            checkPage(40);
             const roleStr = e.role ? e.role.toUpperCase() : '';
-            const orgStr  = [e.org, address].filter(Boolean)[0] || '';
+            const orgStr  = e.org  || '';
             const dateStr = [e.start, e.end].filter(Boolean).join(' - ');
 
-            if (roleStr) {
+            if (roleStr || orgStr) {
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(10);
+                doc.setFontSize(FS_ENTRY);
                 doc.setTextColor(...BLACK);
-                doc.text(roleStr, mL, y);
-                if (orgStr) {
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(10);
-                    doc.text(',  ' + orgStr, mL + doc.getTextWidth(roleStr), y);
-                }
-                y += 13;
+                const leftPart = [roleStr, orgStr].filter(Boolean).join(',  ');
+                doc.text(leftPart, mL, y);
+                y += LEAD_ENTRY;
             }
             if (dateStr) {
                 doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9);
+                doc.setFontSize(FS_SUB);
                 doc.setTextColor(...GRAY);
-                doc.text(e.org + (e.org && dateStr ? ',  ' : '') + dateStr, mL, y);
-                y += 13;
+                doc.text(orgStr + (orgStr && dateStr ? ',  ' : '') + dateStr, mL, y);
+                y += LEAD_SUB;
             }
-
-            // Description — split by newline or sentences for bullets
             if (e.desc) {
-                const bullets = e.desc.split('\n').map(s=>s.trim()).filter(Boolean);
-                if (bullets.length > 1) {
-                    bullets.forEach(b => bullet(b));
-                } else {
-                    // Auto-split on period for single-block text
-                    const sentences = e.desc.split(/(?<=\.)\s+/).map(s=>s.trim()).filter(Boolean);
-                    if (sentences.length > 1) {
-                        sentences.forEach(b => bullet(b));
-                    } else {
-                        bullet(e.desc);
-                    }
-                }
+                const bList = e.desc.split('\n').map(s=>s.trim()).filter(Boolean);
+                const sentences = bList.length > 1 ? bList :
+                    e.desc.split(/(?<=\.)\s+/).map(s=>s.trim()).filter(Boolean);
+                sentences.forEach(b => drawBullet(b));
             }
-            if (i < expEntries.length - 1) y += 8;
+            if (i < expEntries.length - 1) y += 10;
         });
+        y += 6;
     }
 
-    // ══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     // EDUCATION
-    // ══════════════════════════════════════════════════════════════
-    const hasEdu = eduSchool || eduGrade || eduGpa || eduCourses || eduActivities;
+    // ═══════════════════════════════════════════════════════════════
     if (hasEdu) {
-        sectionTitle('Education');
-
+        drawSectionTitle('Education');
         if (eduSchool) {
-            checkPage(28);
-            // Degree / Program  BOLD
-            const gradeLabel = eduGrade || 'High School Diploma';
+            checkPage(36);
+            const gradeLabel = (eduGrade || 'High School Diploma').toUpperCase();
+            const cityStr    = eduCity || '';
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10);
+            doc.setFontSize(FS_ENTRY);
             doc.setTextColor(...BLACK);
-            doc.text(gradeLabel.toUpperCase(), mL, y);
-            const cityStr = eduCity || '';
-            if (cityStr) {
-                doc.setFont('helvetica', 'bold');
-                doc.text(',  ' + cityStr, mL + doc.getTextWidth(gradeLabel.toUpperCase()), y);
-            }
-            y += 13;
+            doc.text(gradeLabel + (cityStr ? ',  ' + cityStr : ''), mL, y);
+            y += LEAD_ENTRY;
 
-            // School name in gray below
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9.5);
+            doc.setFontSize(FS_SUB);
             doc.setTextColor(...GRAY);
             doc.text(eduSchool, mL, y);
-            y += 14;
+            y += LEAD_SUB + 2;
         }
-
-        if (eduGpa) bodyLine('GPA: ' + eduGpa, {size:9.5, after:2});
-        if (eduCourses) bodyLine('Relevant Courses: ' + eduCourses, {size:9, italic:true, color:GRAY, leading:12, after:2});
-        if (eduActivities) bodyLine('Activities: ' + eduActivities, {size:9, italic:true, color:GRAY, leading:12});
-        y += 4;
+        if (eduGpa)        drawBody('GPA: ' + eduGpa, { after: 2 });
+        if (eduCourses)    drawBody('Relevant Courses: ' + eduCourses, { size: FS_SUB, italic: true, color: GRAY, leading: LEAD_SUB, after: 2 });
+        if (eduActivities) drawBody('Activities: ' + eduActivities,    { size: FS_SUB, italic: true, color: GRAY, leading: LEAD_SUB });
+        y += 6;
     }
 
-    // ══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     // CERTIFICATIONS
-    // ══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     if (allCerts.length > 0) {
-        sectionTitle('Certifications');
-        // Two-column layout like the sample
+        drawSectionTitle('Certifications');
         const col1 = allCerts.filter((_, i) => i % 2 === 0);
         const col2 = allCerts.filter((_, i) => i % 2 === 1);
         const half = Math.floor(cW / 2);
         const rows = Math.max(col1.length, col2.length);
         for (let i = 0; i < rows; i++) {
-            checkPage(14);
+            checkPage(LEAD_BODY + 2);
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9.5);
+            doc.setFontSize(FS_BODY);
             doc.setTextColor(...DARK);
             if (col1[i]) {
                 doc.setFillColor(...DARK);
-                doc.circle(mL + 4, y - 3, 1.5, 'F');
-                doc.text(col1[i], mL + 12, y);
+                doc.circle(mL + 5, y - 3.5, 2, 'F');
+                doc.text(col1[i], mL + 14, y);
             }
             if (col2[i]) {
                 doc.setFillColor(...DARK);
-                doc.circle(mL + half + 4, y - 3, 1.5, 'F');
-                doc.text(col2[i], mL + half + 12, y);
+                doc.circle(mL + half + 5, y - 3.5, 2, 'F');
+                doc.text(col2[i], mL + half + 14, y);
             }
-            y += 14;
+            y += LEAD_BODY + 2;
         }
-        y += 4;
     }
 
     doc.save(`${name.replaceAll(" ", "_")}_Resume.pdf`);
