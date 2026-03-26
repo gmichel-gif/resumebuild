@@ -507,6 +507,47 @@
             color: var(--tag-text);
         }
 
+
+        /* Bilingual labels */
+        .trans {
+            display: block;
+            font-size: 10px;
+            font-weight: 400;
+            color: var(--accent);
+            text-transform: none;
+            letter-spacing: 0.01em;
+            margin-top: 1px;
+            font-style: italic;
+            opacity: 0.85;
+        }
+
+        .card-title .trans {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-style: italic;
+            font-weight: 300;
+            color: rgba(200,75,47,0.75);
+            margin-left: 4px;
+        }
+
+        .exp-sub-label .trans {
+            font-size: 9px;
+            font-style: italic;
+            font-weight: 400;
+            color: var(--muted);
+            margin-left: 4px;
+        }
+
+        .section-trans {
+            display: block;
+            font-size: 11px;
+            font-style: italic;
+            font-weight: 300;
+            color: rgba(200,75,47,0.7);
+            font-family: 'DM Sans', sans-serif;
+            margin-top: 2px;
+        }
+
     </style>
 </head>
 <body>
@@ -519,24 +560,24 @@
 
 <!-- 1. Contact Info -->
 <div class="card">
-    <div class="card-title"><span class="step">1</span> Contact Information</div>
+    <div class="card-title"><span class="step">1</span> Contact Information<span class="section-trans">Información de Contacto</span></div>
     <div class="row-2">
         <div class="field">
-            <label>Full Name *</label>
+            <label>Full Name * <span class="trans">Nombre Completo</span></label>
             <input type="text" id="name" placeholder="Jane Smith">
         </div>
         <div class="field">
-            <label>Email *</label>
+            <label>Email * <span class="trans">Correo Electrónico</span></label>
             <input type="email" id="email" placeholder="jane@email.com">
         </div>
     </div>
     <div class="row-2">
         <div class="field">
-            <label>Phone</label>
+            <label>Phone <span class="trans">Teléfono</span></label>
             <input type="text" id="phone" placeholder="(555) 123-4567">
         </div>
         <div class="field">
-            <label>City / State</label>
+            <label>City / State <span class="trans">Ciudad / Estado</span></label>
             <input type="text" id="address" placeholder="Dallas, TX">
         </div>
     </div>
@@ -544,10 +585,10 @@
 
 <!-- 2. Objective -->
 <div class="card">
-    <div class="card-title"><span class="step">2</span> Objective / Summary</div>
+    <div class="card-title"><span class="step">2</span> Objective / Summary<span class="section-trans">Objetivo / Resumen</span></div>
 
     <div class="objective-picker">
-        <p>✦ Quick-fill templates — click one to use it</p>
+        <p>✦ Quick-fill templates — click one to use it <span style="font-style:italic;font-weight:300">/ Plantillas rápidas — haz clic para usarlas</span></p>
         <div class="obj-options" id="objOptions">
             <label class="obj-option" onclick="selectObjective(this)">
                 <input type="radio" name="obj" value="">
@@ -572,50 +613,50 @@
         </div>
     </div>
 
-    <div class="or-divider">or write your own</div>
+    <div class="or-divider">or write your own / <em>o escribe el tuyo</em></div>
 
     <div class="field">
-        <label>Custom Objective</label>
+        <label>Custom Objective <span class="trans">Objetivo Personalizado</span></label>
         <textarea id="objective" placeholder="Write a short summary about yourself and your goals..."></textarea>
     </div>
 </div>
 
 <!-- 3. Education -->
 <div class="card">
-    <div class="card-title"><span class="step">3</span> Education</div>
+    <div class="card-title"><span class="step">3</span> Education<span class="section-trans">Educación</span></div>
 
     <div class="exp-sub-section">
-        <div class="exp-sub-label">🏫 School Information</div>
+        <div class="exp-sub-label">🏫 School Information <span class="trans">Información Escolar</span></div>
         <div class="row-2">
             <div class="field">
-                <label>School Name</label>
+                <label>School Name <span class="trans">Nombre de la Escuela</span></label>
                 <input type="text" id="edu-school" placeholder="e.g. W.T. White High School">
             </div>
             <div class="field">
-                <label>City / State</label>
+                <label>City / State <span class="trans">Ciudad / Estado</span></label>
                 <input type="text" id="edu-city" placeholder="e.g. Dallas, TX">
             </div>
         </div>
         <div class="row-2" style="margin-bottom:0">
             <div class="field" style="margin-bottom:0">
-                <label>Grade / Year</label>
+                <label>Grade / Year <span class="trans">Grado / Año</span></label>
                 <input type="text" id="edu-grade" placeholder="e.g. 11th Grade or Class of 2026">
             </div>
             <div class="field" style="margin-bottom:0">
-                <label>GPA <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <label>GPA <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span><span class="trans">Promedio (opcional)</span></label>
                 <input type="text" id="edu-gpa" placeholder="e.g. 3.8 / 4.0">
             </div>
         </div>
     </div>
 
     <div class="exp-sub-section" style="margin-bottom:0">
-        <div class="exp-sub-label">📚 Courses &amp; Activities</div>
+        <div class="exp-sub-label">📚 Courses &amp; Activities <span class="trans">Cursos y Actividades</span></div>
         <div class="field">
-            <label>Relevant Courses</label>
+            <label>Relevant Courses <span class="trans">Cursos Relevantes</span></label>
             <input type="text" id="edu-courses" placeholder="e.g. AP English, Biology, Computer Science, Algebra II">
         </div>
         <div class="field" style="margin-bottom:0">
-            <label>Clubs / Activities / Sports <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <label>Clubs / Activities / Sports <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span><span class="trans">Clubes / Actividades / Deportes (opcional)</span></label>
             <input type="text" id="edu-activities" placeholder="e.g. Student Council, Soccer Team, Math Club">
         </div>
     </div>
@@ -623,11 +664,11 @@
 
 <!-- 4. Skills -->
 <div class="card">
-    <div class="card-title"><span class="step">4</span> Skills</div>
+    <div class="card-title"><span class="step">4</span> Skills<span class="section-trans">Habilidades</span></div>
 
     <div class="skills-picker">
         <div class="skills-picker-header">
-            <p>✦ Pick from common skills</p>
+            <p>✦ Pick from common skills <span style="font-style:italic;font-weight:300">/ Elige habilidades comunes</span></p>
         </div>
 
         <div class="category-tabs">
@@ -644,37 +685,37 @@
 
     <div class="selected-skills" id="selectedSkillsDisplay"></div>
 
-    <div class="or-divider">or add your own</div>
+    <div class="or-divider">or add your own / <em>o agrega las tuyas</em></div>
 
     <div class="field">
-        <label>Custom Skills (comma-separated)</label>
+        <label>Custom Skills (comma-separated) <span class="trans">Habilidades personalizadas (separadas por coma)</span></label>
         <textarea id="skills" placeholder="e.g. Bilingual (Spanish/English), Photography, 3D Printing..."></textarea>
     </div>
 </div>
 
 <!-- 5. Experience -->
 <div class="card">
-    <div class="card-title"><span class="step">5</span> Experience / Work / Volunteer</div>
+    <div class="card-title"><span class="step">5</span> Experience / Work / Volunteer<span class="section-trans">Experiencia / Trabajo / Voluntariado</span></div>
     <div id="expEntries"></div>
     <button type="button" class="btn-add-entry" onclick="addExpEntry()">+ Add Another Position</button>
 </div>
 
 <!-- 6. Certifications -->
 <div class="card">
-    <div class="card-title"><span class="step">6</span> Certifications / Awards <span style="font-family:'DM Sans';font-weight:300;font-size:13px;color:var(--muted)">(optional)</span></div>
+    <div class="card-title"><span class="step">6</span> Certifications / Awards<span class="section-trans">Certificaciones / Premios</span> <span style="font-family:'DM Sans';font-weight:300;font-size:13px;color:var(--muted)">(optional)</span></div>
 
     <div class="cin-picker">
-        <p>✦ Dallas ISD Career Institute North — Programs of Study</p>
-        <p class="cin-sub">Select your program if you attended CI North</p>
+        <p>✦ Dallas ISD Career Institute North — Programs of Study <span style="font-style:italic;font-weight:300">/ Programas de Estudio</span></p>
+        <p class="cin-sub">Select your program if you attended CI North / <em>Selecciona tu programa si asististe al CI North</em></p>
         <div class="skills-grid" id="cinGrid"></div>
     </div>
 
     <div style="margin-top:10px;" class="selected-skills" id="cinSelectedDisplay"></div>
 
-    <div class="or-divider">also add awards, honors, or other certifications</div>
+    <div class="or-divider">also add awards / <em>también agrega premios u otras certificaciones</em></div>
 
     <div class="field">
-        <label>Other Certifications, Awards & Honors</label>
+        <label>Other Certifications, Awards & Honors <span class="trans">Otras Certificaciones, Premios y Honores</span></label>
         <textarea id="certifications" placeholder="e.g. CPR Certified, Honor Roll 2023–2024, National Honor Society, AP Scholar"></textarea>
     </div>
 </div>
@@ -926,33 +967,33 @@ function addExpEntry() {
     div.id = `exp-${id}`;
     div.innerHTML = `
         <div class="exp-entry-header">
-            <span class="exp-entry-label">Position ${id}</span>
+            <span class="exp-entry-label">Position ${id} <span class="trans" style="font-style:italic">Posición</span></span>
             ${id > 1 ? `<button class="btn-remove-entry" onclick="removeExpEntry(${id})">Remove</button>` : ''}
         </div>
 
         <div class="exp-sub-section">
-            <div class="exp-sub-label">📋 Position Held</div>
+            <div class="exp-sub-label">📋 Position Held <span class="trans">Puesto Desempeñado</span></div>
             <div class="row-2">
                 <div class="field">
-                    <label>Job Title / Role</label>
+                    <label>Job Title / Role <span class=\"trans\">Título / Puesto</span></label>
                     <input type="text" id="exp-role-${id}" placeholder="e.g. Cashier, Volunteer, Intern">
                 </div>
                 <div class="field">
-                    <label>Organization / Company</label>
+                    <label>Organization / Company <span class=\"trans\">Organización / Empresa</span></label>
                     <input type="text" id="exp-org-${id}" placeholder="e.g. Walmart, Food Bank Dallas">
                 </div>
             </div>
             <div class="field" style="margin-bottom:0">
-                <label>Description</label>
+                <label>Description <span class=\"trans\">Descripción</span></label>
                 <textarea id="exp-desc-${id}" placeholder="Describe your duties and accomplishments..."></textarea>
             </div>
         </div>
 
         <div class="exp-sub-section exp-sub-section--dates">
-            <div class="exp-sub-label">📅 Timeframe</div>
+            <div class="exp-sub-label">📅 Timeframe <span class="trans">Período de Tiempo</span></div>
             <div class="row-2">
                 <div class="field" style="margin-bottom:0">
-                    <label>Start Date</label>
+                    <label>Start Date <span class=\"trans\">Fecha de Inicio</span></label>
                     <div class="date-picker-wrap">
                         <select id="exp-start-month-${id}" class="date-select">
                             <option value="">Month</option>
@@ -966,7 +1007,7 @@ function addExpEntry() {
                     <input type="hidden" id="exp-start-${id}">
                 </div>
                 <div class="field" style="margin-bottom:0">
-                    <label>End Date</label>
+                    <label>End Date <span class=\"trans\">Fecha de Fin</span></label>
                     <div class="date-picker-wrap">
                         <select id="exp-end-month-${id}" class="date-select" onchange="handleEndMonthChange(this, ${id})">
                             <option value="">Month</option>
