@@ -630,7 +630,14 @@
         <div class="row-2">
             <div class="field">
                 <label>School Name <span class="trans">Nombre de la Escuela</span></label>
-                <input type="text" id="edu-school" placeholder="e.g. W.T. White High School">
+                <select id="edu-school" class="date-select" style="width:100%">
+                    <option value="">Select your school / Selecciona tu escuela</option>
+                    <option>Conrad High School</option>
+                    <option>Hillcrest High School</option>
+                    <option>North Dallas High School</option>
+                    <option>Thomas Jefferson High School</option>
+                    <option>W.T. White High School</option>
+                </select>
             </div>
             <div class="field">
                 <label>City / State <span class="trans">Ciudad / Estado</span></label>
@@ -640,7 +647,11 @@
         <div class="row-2" style="margin-bottom:0">
             <div class="field" style="margin-bottom:0">
                 <label>Grade / Year <span class="trans">Grado / Año</span></label>
-                <input type="text" id="edu-grade" placeholder="e.g. 11th Grade or Class of 2026">
+                <select id="edu-grade" class="date-select" style="width:100%">
+                    <option value="">Select grade / Selecciona grado</option>
+                    <option value="Junior — 11th Grade">Junior — 11th Grade / 11° Grado</option>
+                    <option value="Senior — 12th Grade">Senior — 12th Grade / 12° Grado</option>
+                </select>
             </div>
             <div class="field" style="margin-bottom:0">
                 <label>GPA <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span><span class="trans">Promedio (opcional)</span></label>
