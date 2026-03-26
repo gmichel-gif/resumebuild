@@ -410,6 +410,28 @@
         }
         .btn-remove-entry:hover { opacity: 1; }
 
+        .exp-sub-section {
+            background: #fafaf8;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px 16px;
+            margin-bottom: 10px;
+        }
+
+        .exp-sub-section--dates {
+            background: #f4f8f6;
+            border-color: var(--tag-border);
+        }
+
+        .exp-sub-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
         .btn-add-entry {
             display: inline-flex;
             align-items: center;
@@ -790,29 +812,37 @@ function addExpEntry() {
             <span class="exp-entry-label">Position ${id}</span>
             ${id > 1 ? `<button class="btn-remove-entry" onclick="removeExpEntry(${id})">Remove</button>` : ''}
         </div>
-        <div class="row-2">
-            <div class="field">
-                <label>Job Title / Role</label>
-                <input type="text" id="exp-role-${id}" placeholder="e.g. Cashier, Volunteer, Intern">
+
+        <div class="exp-sub-section">
+            <div class="exp-sub-label">📋 Position Held</div>
+            <div class="row-2">
+                <div class="field">
+                    <label>Job Title / Role</label>
+                    <input type="text" id="exp-role-${id}" placeholder="e.g. Cashier, Volunteer, Intern">
+                </div>
+                <div class="field">
+                    <label>Organization / Company</label>
+                    <input type="text" id="exp-org-${id}" placeholder="e.g. Walmart, Food Bank Dallas">
+                </div>
             </div>
-            <div class="field">
-                <label>Organization / Company</label>
-                <input type="text" id="exp-org-${id}" placeholder="e.g. Walmart, Food Bank Dallas">
-            </div>
-        </div>
-        <div class="row-2">
-            <div class="field">
-                <label>Start Date</label>
-                <input type="text" id="exp-start-${id}" placeholder="e.g. June 2024 or Summer 2024">
-            </div>
-            <div class="field">
-                <label>End Date</label>
-                <input type="text" id="exp-end-${id}" placeholder="e.g. August 2024 or Present">
+            <div class="field" style="margin-bottom:0">
+                <label>Description</label>
+                <textarea id="exp-desc-${id}" placeholder="Describe your duties and accomplishments..."></textarea>
             </div>
         </div>
-        <div class="field">
-            <label>Description</label>
-            <textarea id="exp-desc-${id}" placeholder="Describe your duties and accomplishments..."></textarea>
+
+        <div class="exp-sub-section exp-sub-section--dates">
+            <div class="exp-sub-label">📅 Timeframe</div>
+            <div class="row-2">
+                <div class="field" style="margin-bottom:0">
+                    <label>Start Date</label>
+                    <input type="text" id="exp-start-${id}" placeholder="e.g. June 2024 or Summer 2024">
+                </div>
+                <div class="field" style="margin-bottom:0">
+                    <label>End Date</label>
+                    <input type="text" id="exp-end-${id}" placeholder="e.g. August 2024 or Present">
+                </div>
+            </div>
         </div>
     `;
     wrap.appendChild(div);
