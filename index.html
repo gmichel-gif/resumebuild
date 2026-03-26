@@ -372,6 +372,88 @@
             .row-2 { grid-template-columns: 1fr; }
             .card { padding: 22px; }
         }
+
+        /* Experience entry blocks */
+        .exp-entry {
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 16px;
+            background: #fdfcfb;
+            position: relative;
+        }
+
+        .exp-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .exp-entry-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .btn-remove-entry {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 13px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            opacity: 0.7;
+            padding: 0;
+        }
+        .btn-remove-entry:hover { opacity: 1; }
+
+        .btn-add-entry {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            padding: 9px 18px;
+            border: 1.5px dashed var(--border);
+            background: transparent;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-add-entry:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* CI North picker */
+        .cin-picker {
+            background: #f0f4ff;
+            border: 1.5px solid #bfcfee;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .cin-picker > p:first-child {
+            font-size: 12px;
+            color: #3a5bbf;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .cin-sub {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 12px !important;
+        }
     </style>
 </head>
 <body>
@@ -488,18 +570,27 @@
 <!-- 5. Experience -->
 <div class="card">
     <div class="card-title"><span class="step">5</span> Experience / Work / Volunteer</div>
-    <div class="field">
-        <label>Describe your experience</label>
-        <textarea id="experience" placeholder="e.g. Cashier at Walmart (Summer 2024) — handled transactions, assisted customers, maintained cleanliness&#10;Volunteer at Food Bank (2023–present) — sorted donations, assisted elderly clients"></textarea>
-    </div>
+    <div id="expEntries"></div>
+    <button type="button" class="btn-add-entry" onclick="addExpEntry()">+ Add Another Position</button>
 </div>
 
 <!-- 6. Certifications -->
 <div class="card">
     <div class="card-title"><span class="step">6</span> Certifications / Awards <span style="font-family:'DM Sans';font-weight:300;font-size:13px;color:var(--muted)">(optional)</span></div>
+
+    <div class="cin-picker">
+        <p>✦ Dallas ISD Career Institute North — Programs of Study</p>
+        <p class="cin-sub">Select your program if you attended CI North</p>
+        <div class="skills-grid" id="cinGrid"></div>
+    </div>
+
+    <div style="margin-top:10px;" class="selected-skills" id="cinSelectedDisplay"></div>
+
+    <div class="or-divider">also add awards, honors, or other certifications</div>
+
     <div class="field">
-        <label>List any certifications, awards, or honors</label>
-        <textarea id="certifications" placeholder="e.g. CPR Certified, Honor Roll 2023–2024, National Honor Society"></textarea>
+        <label>Other Certifications, Awards & Honors</label>
+        <textarea id="certifications" placeholder="e.g. CPR Certified, Honor Roll 2023–2024, National Honor Society, AP Scholar"></textarea>
     </div>
 </div>
 
@@ -562,9 +653,34 @@ const skillData = [
     { label: "Organization", cat: "work" },
 ];
 
+// ---- CI North Programs of Study ----
+const cinPrograms = [
+    "Architecture & Interior Design",
+    "Automotive Technician",
+    "Aviation",
+    "Construction & Carpentry",
+    "Culinary Arts",
+    "Cybersecurity",
+    "Dental Assistant",
+    "EKG Technician",
+    "Electrical Technology",
+    "Emergency Medical Technician (EMT)",
+    "Health Science",
+    "Heating, Ventilation & Air Conditioning (HVAC)",
+    "Mechatronics & Advanced Manufacturing",
+    "Patient Care Technician",
+    "Phlebotomy",
+    "Plumbing",
+    "Programming & Software Development",
+    "Robotics",
+    "Welding",
+];
+
 let selectedSkills = new Set();
+let selectedCIN = new Set();
 let currentCat = 'all';
 
+// ---- Skills Grid ----
 function buildGrid(cat) {
     const grid = document.getElementById('skillsGrid');
     grid.innerHTML = '';
@@ -613,6 +729,116 @@ function showCat(btn, cat) {
     buildGrid(cat);
 }
 
+// ---- CI North Grid ----
+function buildCINGrid() {
+    const grid = document.getElementById('cinGrid');
+    grid.innerHTML = '';
+    cinPrograms.forEach(prog => {
+        const chip = document.createElement('div');
+        chip.className = 'skill-chip' + (selectedCIN.has(prog) ? ' chosen' : '');
+        chip.style.borderColor = selectedCIN.has(prog) ? '#3a5bbf' : '#bfcfee';
+        chip.style.background = selectedCIN.has(prog) ? '#3a5bbf' : '#fff';
+        chip.style.color = selectedCIN.has(prog) ? '#fff' : 'var(--ink)';
+        chip.textContent = prog;
+        chip.onclick = () => toggleCIN(prog);
+        grid.appendChild(chip);
+    });
+}
+
+function toggleCIN(prog) {
+    if (selectedCIN.has(prog)) {
+        selectedCIN.delete(prog);
+    } else {
+        selectedCIN.add(prog);
+    }
+    buildCINGrid();
+    renderCINTags();
+}
+
+function renderCINTags() {
+    const wrap = document.getElementById('cinSelectedDisplay');
+    wrap.innerHTML = '';
+    selectedCIN.forEach(prog => {
+        const tag = document.createElement('div');
+        tag.className = 'sel-tag';
+        tag.style.borderColor = '#bfcfee';
+        tag.style.color = '#3a5bbf';
+        tag.style.background = '#eef1fb';
+        tag.innerHTML = `CI North: ${prog} <button style="color:#3a5bbf" onclick="removeCIN('${prog.replace(/'/g,"\\'")}')">×</button>`;
+        wrap.appendChild(tag);
+    });
+}
+
+function removeCIN(prog) {
+    selectedCIN.delete(prog);
+    buildCINGrid();
+    renderCINTags();
+}
+
+// ---- Experience Entries ----
+let expCount = 0;
+
+function addExpEntry() {
+    expCount++;
+    const id = expCount;
+    const wrap = document.getElementById('expEntries');
+    const div = document.createElement('div');
+    div.className = 'exp-entry';
+    div.id = `exp-${id}`;
+    div.innerHTML = `
+        <div class="exp-entry-header">
+            <span class="exp-entry-label">Position ${id}</span>
+            ${id > 1 ? `<button class="btn-remove-entry" onclick="removeExpEntry(${id})">Remove</button>` : ''}
+        </div>
+        <div class="row-2">
+            <div class="field">
+                <label>Job Title / Role</label>
+                <input type="text" id="exp-role-${id}" placeholder="e.g. Cashier, Volunteer, Intern">
+            </div>
+            <div class="field">
+                <label>Organization / Company</label>
+                <input type="text" id="exp-org-${id}" placeholder="e.g. Walmart, Food Bank Dallas">
+            </div>
+        </div>
+        <div class="row-2">
+            <div class="field">
+                <label>Start Date</label>
+                <input type="text" id="exp-start-${id}" placeholder="e.g. June 2024 or Summer 2024">
+            </div>
+            <div class="field">
+                <label>End Date</label>
+                <input type="text" id="exp-end-${id}" placeholder="e.g. August 2024 or Present">
+            </div>
+        </div>
+        <div class="field">
+            <label>Description</label>
+            <textarea id="exp-desc-${id}" placeholder="Describe your duties and accomplishments..."></textarea>
+        </div>
+    `;
+    wrap.appendChild(div);
+}
+
+function removeExpEntry(id) {
+    const el = document.getElementById(`exp-${id}`);
+    if (el) el.remove();
+}
+
+function getExpEntries() {
+    const entries = [];
+    document.querySelectorAll('.exp-entry').forEach(el => {
+        const id = el.id.replace('exp-', '');
+        const role = (document.getElementById(`exp-role-${id}`)?.value || '').trim();
+        const org = (document.getElementById(`exp-org-${id}`)?.value || '').trim();
+        const start = (document.getElementById(`exp-start-${id}`)?.value || '').trim();
+        const end = (document.getElementById(`exp-end-${id}`)?.value || '').trim();
+        const desc = (document.getElementById(`exp-desc-${id}`)?.value || '').trim();
+        if (role || org || desc) {
+            entries.push({ role, org, start, end, desc });
+        }
+    });
+    return entries;
+}
+
 function selectObjective(el) {
     document.querySelectorAll('.obj-option').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
@@ -620,7 +846,10 @@ function selectObjective(el) {
     document.getElementById('objective').value = text;
 }
 
+// Init
 buildGrid('all');
+buildCINGrid();
+addExpEntry();
 
 // ---- PDF Generation ----
 async function generatePDF() {
@@ -639,8 +868,8 @@ async function generatePDF() {
     const objective = document.getElementById('objective').value.trim();
     const education = document.getElementById('education').value.trim();
     const customSkills = document.getElementById('skills').value.trim();
-    const experience = document.getElementById('experience').value.trim();
     const certifications = document.getElementById('certifications').value.trim();
+    const expEntries = getExpEntries();
 
     // Merge picked + custom skills
     const allSkills = [...selectedSkills];
@@ -650,6 +879,11 @@ async function generatePDF() {
         });
     }
     const skillsText = allSkills.join(', ');
+
+    // Merge CI programs + other certs
+    const cinList = [...selectedCIN].map(p => `Dallas ISD CI North — ${p}`);
+    const customCertList = certifications ? certifications.split('\n').map(s => s.trim()).filter(Boolean) : [];
+    const allCerts = [...cinList, ...customCertList].join('\n');
 
     const doc = new jsPDF({ unit: 'pt', format: 'letter' });
     const pageW = 612;
@@ -703,26 +937,53 @@ async function generatePDF() {
     if (objective) {
         sectionTitle("Objective");
         bodyText(objective);
-        y += 6;
+        y += 4;
     }
     if (education) {
         sectionTitle("Education");
         bodyText(education);
-        y += 6;
+        y += 4;
     }
     if (skillsText) {
         sectionTitle("Skills");
         bodyText(skillsText);
-        y += 6;
+        y += 4;
     }
-    if (experience) {
+    if (expEntries.length > 0) {
         sectionTitle("Experience");
-        bodyText(experience);
-        y += 6;
+        expEntries.forEach((e, i) => {
+            // Role + Org bold, dates right-aligned
+            const roleOrg = [e.role, e.org].filter(Boolean).join(' — ');
+            const dateStr = [e.start, e.end].filter(Boolean).join(' – ');
+            if (roleOrg) {
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(10.5);
+                doc.setTextColor(30, 25, 20);
+                doc.text(roleOrg, margin, y);
+                if (dateStr) {
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 95, 90);
+                    const dw = doc.getTextWidth(dateStr);
+                    doc.text(dateStr, pageW - margin - dw, y);
+                }
+                y += 14;
+            }
+            if (e.desc) {
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10.5);
+                doc.setTextColor(30, 25, 20);
+                const lines = doc.splitTextToSize(e.desc, contentW);
+                doc.text(lines, margin, y);
+                y += lines.length * 13;
+            }
+            if (i < expEntries.length - 1) y += 10;
+        });
+        y += 8;
     }
-    if (certifications) {
+    if (allCerts) {
         sectionTitle("Certifications & Awards");
-        bodyText(certifications);
+        bodyText(allCerts);
     }
 
     doc.save(`${name.replaceAll(" ", "_")}_Resume.pdf`);
