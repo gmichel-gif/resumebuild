@@ -476,6 +476,37 @@
             color: var(--muted);
             margin-bottom: 12px !important;
         }
+
+        /* Date picker */
+        .date-picker-wrap {
+            display: flex;
+            gap: 8px;
+        }
+
+        .date-select {
+            flex: 1;
+            padding: 10px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            color: var(--ink);
+            background: #fdfcfb;
+            cursor: pointer;
+            appearance: auto;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .date-select:focus {
+            border-color: var(--accent);
+        }
+
+        .date-select option[value="Present"] {
+            font-weight: 600;
+            color: var(--tag-text);
+        }
+
     </style>
 </head>
 <body>
@@ -829,6 +860,60 @@ function removeCIN(prog) {
     renderCINTags();
 }
 
+// ---- Date picker helpers ----
+function populateYears(selectEl, includeBlank=true) {
+    const currentYear = new Date().getFullYear();
+    selectEl.innerHTML = '';
+    if (includeBlank) {
+        const blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = 'Year';
+        selectEl.appendChild(blank);
+    }
+    for (let y = currentYear + 1; y >= currentYear - 10; y--) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        selectEl.appendChild(opt);
+    }
+}
+
+function syncDateHidden(id, startOrEnd) {
+    const month = document.getElementById(`exp-${startOrEnd}-month-${id}`)?.value || '';
+    const year = document.getElementById(`exp-${startOrEnd}-year-${id}`)?.value || '';
+    const hidden = document.getElementById(`exp-${startOrEnd}-${id}`);
+    if (!hidden) return;
+    if (month === 'Present') {
+        hidden.value = 'Present';
+    } else {
+        hidden.value = [month, year].filter(Boolean).join(' ');
+    }
+}
+
+function handleEndMonthChange(sel, id) {
+    const yearSel = document.getElementById(`exp-end-year-${id}`);
+    if (sel.value === 'Present') {
+        yearSel.style.display = 'none';
+    } else {
+        yearSel.style.display = '';
+    }
+    syncDateHidden(id, 'end');
+}
+
+function initDatePickers(id) {
+    ['start', 'end'].forEach(se => {
+        const yearSel = document.getElementById(`exp-${se}-year-${id}`);
+        if (yearSel) populateYears(yearSel);
+        const monthSel = document.getElementById(`exp-${se}-month-${id}`);
+        if (monthSel) {
+            monthSel.addEventListener('change', () => syncDateHidden(id, se));
+        }
+        if (yearSel) {
+            yearSel.addEventListener('change', () => syncDateHidden(id, se));
+        }
+    });
+}
+
 // ---- Experience Entries ----
 let expCount = 0;
 
@@ -868,16 +953,38 @@ function addExpEntry() {
             <div class="row-2">
                 <div class="field" style="margin-bottom:0">
                     <label>Start Date</label>
-                    <input type="text" id="exp-start-${id}" placeholder="e.g. June 2024 or Summer 2024">
+                    <div class="date-picker-wrap">
+                        <select id="exp-start-month-${id}" class="date-select">
+                            <option value="">Month</option>
+                            <option>January</option><option>February</option><option>March</option>
+                            <option>April</option><option>May</option><option>June</option>
+                            <option>July</option><option>August</option><option>September</option>
+                            <option>October</option><option>November</option><option>December</option>
+                        </select>
+                        <select id="exp-start-year-${id}" class="date-select"></select>
+                    </div>
+                    <input type="hidden" id="exp-start-${id}">
                 </div>
                 <div class="field" style="margin-bottom:0">
                     <label>End Date</label>
-                    <input type="text" id="exp-end-${id}" placeholder="e.g. August 2024 or Present">
+                    <div class="date-picker-wrap">
+                        <select id="exp-end-month-${id}" class="date-select" onchange="handleEndMonthChange(this, ${id})">
+                            <option value="">Month</option>
+                            <option value="Present">Present</option>
+                            <option>January</option><option>February</option><option>March</option>
+                            <option>April</option><option>May</option><option>June</option>
+                            <option>July</option><option>August</option><option>September</option>
+                            <option>October</option><option>November</option><option>December</option>
+                        </select>
+                        <select id="exp-end-year-${id}" class="date-select"></select>
+                    </div>
+                    <input type="hidden" id="exp-end-${id}">
                 </div>
             </div>
         </div>
     `;
     wrap.appendChild(div);
+    initDatePickers(id);
 }
 
 function removeExpEntry(id) {
@@ -919,177 +1026,234 @@ async function generatePDF() {
 
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
+    if (!name || !email) { alert("Please fill in your Name and Email before downloading."); return; }
 
-    if (!name || !email) {
-        alert("Please fill in your Name and Email before downloading.");
-        return;
-    }
-
-    const phone = document.getElementById('phone').value.trim();
-    const address = document.getElementById('address').value.trim();
-    const objective = document.getElementById('objective').value.trim();
-    const eduSchool = document.getElementById('edu-school').value.trim();
-    const eduCity = document.getElementById('edu-city').value.trim();
-    const eduGrade = document.getElementById('edu-grade').value.trim();
-    const eduGpa = document.getElementById('edu-gpa').value.trim();
+    const phone      = document.getElementById('phone').value.trim();
+    const address    = document.getElementById('address').value.trim();
+    const objective  = document.getElementById('objective').value.trim();
+    const eduSchool  = document.getElementById('edu-school').value.trim();
+    const eduCity    = document.getElementById('edu-city').value.trim();
+    const eduGrade   = document.getElementById('edu-grade').value.trim();
+    const eduGpa     = document.getElementById('edu-gpa').value.trim();
     const eduCourses = document.getElementById('edu-courses').value.trim();
     const eduActivities = document.getElementById('edu-activities').value.trim();
-    const customSkills = document.getElementById('skills').value.trim();
+    const customSkills  = document.getElementById('skills').value.trim();
     const certifications = document.getElementById('certifications').value.trim();
     const expEntries = getExpEntries();
 
-    // Merge picked + custom skills
     const allSkills = [...selectedSkills];
-    if (customSkills) {
-        customSkills.split(',').map(s => s.trim()).filter(Boolean).forEach(s => {
-            if (!allSkills.includes(s)) allSkills.push(s);
-        });
+    if (customSkills) customSkills.split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>{ if(!allSkills.includes(s)) allSkills.push(s); });
+    const skillsText = allSkills.join(' • ');
+
+    const cinList = [...selectedCIN].map(p => `CI North — ${p}`);
+    const customCertList = certifications ? certifications.split('\n').map(s=>s.trim()).filter(Boolean) : [];
+    const allCerts = [...cinList, ...customCertList];
+
+    // ── Page geometry ──────────────────────────────────────────────
+    const doc      = new jsPDF({ unit: 'pt', format: 'letter' });
+    const pageW    = 612;
+    const pageH    = 792;
+    const mTop     = 44;
+    const mBot     = 44;
+    const mOuter   = 44;
+    const colGap   = 16;
+    const sideW    = 168;
+    const mainX    = mOuter + sideW + colGap;
+    const mainW    = pageW - mainX - mOuter;
+    const sideX    = mOuter;
+    const ACCENT   = [180, 55, 35];
+    const INK      = [22, 20, 18];
+    const MUTED    = [100, 95, 90];
+    const LIGHT    = [230, 225, 218];
+
+    let yMain = mTop;
+    let ySide = mTop;
+    let page  = 1;
+
+    function newPage() {
+        doc.addPage();
+        page++;
+        yMain = mTop;
+        ySide = mTop;
+        // sidebar stripe on new pages too
+        drawSidebarBg();
     }
-    const skillsText = allSkills.join(', ');
 
-    // Merge CI programs + other certs
-    const cinList = [...selectedCIN].map(p => `Dallas ISD CI North — ${p}`);
-    const customCertList = certifications ? certifications.split('\n').map(s => s.trim()).filter(Boolean) : [];
-    const allCerts = [...cinList, ...customCertList].join('\n');
+    function checkPageMain(needed) {
+        if (yMain + needed > pageH - mBot) newPage();
+    }
+    function checkPageSide(needed) {
+        if (ySide + needed > pageH - mBot) newPage();
+    }
 
-    const doc = new jsPDF({ unit: 'pt', format: 'letter' });
-    const pageW = 612;
-    const margin = 50;
-    const contentW = pageW - margin * 2;
-    let y = 55;
+    // ── Sidebar background stripe ───────────────────────────────────
+    function drawSidebarBg() {
+        doc.setFillColor(245, 242, 235);
+        doc.rect(0, 0, mOuter + sideW + colGap / 2, pageH, 'F');
+    }
+    drawSidebarBg();
+
+    // ── Header band ─────────────────────────────────────────────────
+    doc.setFillColor(...ACCENT);
+    doc.rect(0, 0, pageW, mTop + 38, 'F');
 
     // Name
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(24);
-    doc.text(name, margin, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(255, 255, 255);
+    doc.text(name.toUpperCase(), mOuter, mTop + 16);
 
-    // Contact line
-    y += 22;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(90, 85, 80);
+    // Contact row
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 220, 210);
     const contactParts = [email, phone, address].filter(Boolean);
-    doc.text(contactParts.join('   |   '), margin, y);
+    doc.text(contactParts.join('   ·   '), mOuter, mTop + 30);
 
-    // Divider
-    y += 12;
-    doc.setDrawColor(200, 75, 47);
-    doc.setLineWidth(1.5);
-    doc.line(margin, y, pageW - margin, y);
-    y += 16;
+    yMain = mTop + 38 + 18;
+    ySide = mTop + 38 + 18;
 
-    function sectionTitle(title) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.setTextColor(200, 75, 47);
-        doc.text(title.toUpperCase(), margin, y);
-        y += 4;
-        doc.setDrawColor(220, 200, 195);
-        doc.setLineWidth(0.5);
-        doc.line(margin, y, pageW - margin, y);
-        y += 12;
-        doc.setTextColor(30, 25, 20);
+    // ── Helpers ─────────────────────────────────────────────────────
+    function sectionHeader(label, x, w, isMain) {
+        const yRef = isMain ? yMain : ySide;
+        if (isMain) checkPageMain(22); else checkPageSide(22);
+        const y = isMain ? yMain : ySide;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(...ACCENT);
+        doc.text(label.toUpperCase(), x, y);
+        doc.setDrawColor(...ACCENT);
+        doc.setLineWidth(0.8);
+        doc.line(x, y + 3, x + w, y + 3);
+        if (isMain) yMain = y + 14; else ySide = y + 14;
     }
 
-    function bodyText(text) {
+    function mainText(text, opts={}) {
         if (!text) return;
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10.5);
-        doc.setTextColor(30, 25, 20);
-        const lines = doc.splitTextToSize(text, contentW);
-        doc.text(lines, margin, y);
-        y += lines.length * 13 + 6;
+        doc.setFont('helvetica', opts.bold ? 'bold' : (opts.italic ? 'italic' : 'normal'));
+        doc.setFontSize(opts.size || 9.5);
+        doc.setTextColor(...(opts.color || INK));
+        const lines = doc.splitTextToSize(text, mainW);
+        checkPageMain(lines.length * (opts.leading || 12));
+        doc.text(lines, mainX, yMain);
+        yMain += lines.length * (opts.leading || 12) + (opts.after || 0);
     }
 
-    if (objective) {
-        sectionTitle("Objective");
-        bodyText(objective);
-        y += 4;
+    function sideText(text, opts={}) {
+        if (!text) return;
+        doc.setFont('helvetica', opts.bold ? 'bold' : (opts.italic ? 'italic' : 'normal'));
+        doc.setFontSize(opts.size || 9);
+        doc.setTextColor(...(opts.color || INK));
+        const lines = doc.splitTextToSize(text, sideW);
+        checkPageSide(lines.length * (opts.leading || 12));
+        doc.text(lines, sideX, ySide);
+        ySide += lines.length * (opts.leading || 12) + (opts.after || 0);
     }
-    const hasEducation = eduSchool || eduGrade || eduGpa || eduCourses || eduActivities;
-    if (hasEducation) {
-        sectionTitle("Education");
-        // School name + location bold, grade/year right-aligned
-        const schoolLine = [eduSchool, eduCity].filter(Boolean).join(', ');
-        if (schoolLine) {
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(10.5);
-            doc.setTextColor(30, 25, 20);
-            doc.text(schoolLine, margin, y);
-            if (eduGrade) {
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(10);
-                doc.setTextColor(100, 95, 90);
-                const gw = doc.getTextWidth(eduGrade);
-                doc.text(eduGrade, pageW - margin - gw, y);
-            }
-            y += 14;
+
+    function rowBoldRight(leftText, rightText, x, w, isMain) {
+        const y = isMain ? yMain : ySide;
+        if (isMain) checkPageMain(13); else checkPageSide(13);
+        const yy = isMain ? yMain : ySide;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(...INK);
+        doc.text(leftText, x, yy);
+        if (rightText) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8.5);
+            doc.setTextColor(...MUTED);
+            const rw = doc.getTextWidth(rightText);
+            doc.text(rightText, x + w - rw, yy);
         }
-        if (eduGpa) {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10.5);
-            doc.setTextColor(30, 25, 20);
-            doc.text('GPA: ' + eduGpa, margin, y);
-            y += 14;
-        }
-        if (eduCourses) {
-            doc.setFont("helvetica", "italic");
-            doc.setFontSize(10);
-            doc.setTextColor(80, 75, 70);
-            const courseLines = doc.splitTextToSize('Courses: ' + eduCourses, contentW);
-            doc.text(courseLines, margin, y);
-            y += courseLines.length * 13;
-        }
-        if (eduActivities) {
-            doc.setFont("helvetica", "italic");
-            doc.setFontSize(10);
-            doc.setTextColor(80, 75, 70);
-            const actLines = doc.splitTextToSize('Activities: ' + eduActivities, contentW);
-            doc.text(actLines, margin, y);
-            y += actLines.length * 13;
-        }
-        y += 6;
+        if (isMain) yMain = yy + 13; else ySide = yy + 13;
     }
+
+    function gap(isMain, px=6) {
+        if (isMain) yMain += px; else ySide += px;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SIDEBAR CONTENT
+    // ═══════════════════════════════════════════════════════════════
+
+    // ── Contact ──
+    sectionHeader('Contact', sideX, sideW, false);
+    if (email) { sideText('Email', {bold:true, size:8, color:MUTED}); sideText(email, {size:8.5, after:4}); }
+    if (phone) { sideText('Phone', {bold:true, size:8, color:MUTED}); sideText(phone, {size:8.5, after:4}); }
+    if (address) { sideText('Location', {bold:true, size:8, color:MUTED}); sideText(address, {size:8.5, after:4}); }
+    gap(false, 6);
+
+    // ── Skills ──
     if (skillsText) {
-        sectionTitle("Skills");
-        bodyText(skillsText);
-        y += 4;
-    }
-    if (expEntries.length > 0) {
-        sectionTitle("Experience");
-        expEntries.forEach((e, i) => {
-            // Role + Org bold, dates right-aligned
-            const roleOrg = [e.role, e.org].filter(Boolean).join(' — ');
-            const dateStr = [e.start, e.end].filter(Boolean).join(' – ');
-            if (roleOrg) {
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(10.5);
-                doc.setTextColor(30, 25, 20);
-                doc.text(roleOrg, margin, y);
-                if (dateStr) {
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(10);
-                    doc.setTextColor(100, 95, 90);
-                    const dw = doc.getTextWidth(dateStr);
-                    doc.text(dateStr, pageW - margin - dw, y);
-                }
-                y += 14;
-            }
-            if (e.desc) {
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(10.5);
-                doc.setTextColor(30, 25, 20);
-                const lines = doc.splitTextToSize(e.desc, contentW);
-                doc.text(lines, margin, y);
-                y += lines.length * 13;
-            }
-            if (i < expEntries.length - 1) y += 10;
+        sectionHeader('Skills', sideX, sideW, false);
+        allSkills.forEach(s => {
+            checkPageSide(16);
+            // pill chip
+            const tw = doc.setFontSize(8) || doc.getTextWidth(s);
+            doc.setFontSize(8);
+            const tw2 = doc.getTextWidth(s);
+            const ph = 12, pw = Math.min(tw2 + 10, sideW);
+            doc.setFillColor(225, 235, 228);
+            doc.roundedRect(sideX, ySide - 9, pw, ph, 3, 3, 'F');
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...INK);
+            doc.text(s, sideX + 5, ySide - 0.5);
+            ySide += 15;
         });
-        y += 8;
+        gap(false, 6);
     }
-    if (allCerts) {
-        sectionTitle("Certifications & Awards");
-        bodyText(allCerts);
+
+    // ── Certifications ──
+    if (allCerts.length > 0) {
+        sectionHeader('Certifications & Awards', sideX, sideW, false);
+        allCerts.forEach(c => {
+            checkPageSide(14);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8.5);
+            doc.setTextColor(...INK);
+            // bullet
+            doc.setFillColor(...ACCENT);
+            doc.circle(sideX + 3, ySide - 3, 1.5, 'F');
+            const lines = doc.splitTextToSize(c, sideW - 10);
+            doc.text(lines, sideX + 9, ySide);
+            ySide += lines.length * 11 + 3;
+        });
+        gap(false, 6);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // MAIN CONTENT
+    // ═══════════════════════════════════════════════════════════════
+
+    // ── Objective ──
+    if (objective) {
+        sectionHeader('Objective', mainX, mainW, true);
+        mainText(objective, {size:9.5, leading:13, after:8});
+    }
+
+    // ── Education ──
+    const hasEdu = eduSchool || eduGrade || eduGpa || eduCourses || eduActivities;
+    if (hasEdu) {
+        sectionHeader('Education', mainX, mainW, true);
+        const schoolLine = [eduSchool, eduCity].filter(Boolean).join(', ');
+        rowBoldRight(schoolLine || '—', eduGrade, mainX, mainW, true);
+        if (eduGpa) mainText('GPA: ' + eduGpa, {size:9, color:MUTED, after:2});
+        if (eduCourses) mainText('Courses: ' + eduCourses, {size:8.5, italic:true, color:MUTED, leading:11, after:2});
+        if (eduActivities) mainText('Activities: ' + eduActivities, {size:8.5, italic:true, color:MUTED, leading:11});
+        gap(true, 10);
+    }
+
+    // ── Experience ──
+    if (expEntries.length > 0) {
+        sectionHeader('Experience', mainX, mainW, true);
+        expEntries.forEach((e, i) => {
+            const roleOrg = [e.role, e.org].filter(Boolean).join(' · ');
+            const dateStr = [e.start, e.end].filter(Boolean).join(' – ');
+            rowBoldRight(roleOrg || '—', dateStr, mainX, mainW, true);
+            if (e.desc) mainText(e.desc, {size:9, leading:12, color:[55,50,45], after:2});
+            if (i < expEntries.length - 1) gap(true, 6);
+        });
+        gap(true, 10);
     }
 
     doc.save(`${name.replaceAll(" ", "_")}_Resume.pdf`);
