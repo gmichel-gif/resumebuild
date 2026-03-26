@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Resume Builder PDF</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        input, textarea { width: 100%; margin: 5px 0 15px; padding: 8px; }
+        textarea { height: 80px; }
+        button { padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h2>Fast Resume Builder (PDF)</h2>
+    <label>Name:</label>
+    <input id="name" placeholder="Full Name">
+    <label>Email:</label>
+    <input id="email" placeholder="Email">
+    <label>Phone:</label>
+    <input id="phone" placeholder="Phone Number">
+    <label>School:</label>
+    <input id="school" placeholder="High School or College">
+    <label>Skills (comma separated):</label>
+    <input id="skills" placeholder="e.g., Microsoft Word, Teamwork">
+    <label>Experience / Volunteer Work:</label>
+    <textarea id="experience" placeholder="Write your experience here"></textarea>
+    <button onclick="generatePDF()">Download PDF</button>
+
+    <script>
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+
+            const name = document.getElementById('name').value || "[Your Name]";
+            const email = document.getElementById('email').value || "[Email]";
+            const phone = document.getElementById('phone').value || "[Phone]";
+            const school = document.getElementById('school').value || "[School]";
+            const skills = document.getElementById('skills').value || "[Skills]";
+            const experience = document.getElementById('experience').value || "[Experience]";
+
+            const doc = new jsPDF();
+
+            let y = 10;
+            doc.setFontSize(16);
+            doc.text("RESUME", 105, y, { align: "center" });
+
+            y += 10;
+            doc.setFontSize(12);
+            doc.text(`Name: ${name}`, 10, y);
+            y += 7;
+            doc.text(`Email: ${email}`, 10, y);
+            y += 7;
+            doc.text(`Phone: ${phone}`, 10, y);
+            y += 7;
+            doc.text(`School: ${school}`, 10, y);
+
+            y += 10;
+            doc.text("Skills:", 10, y);
+            y += 7;
+            doc.text(skills, 10, y);
+
+            y += 10;
+            doc.text("Experience:", 10, y);
+            y += 7;
+            const lines = doc.splitTextToSize(experience, 180);
+            doc.text(lines, 10, y);
+
+            doc.save(`${name.replaceAll(" ", "_")}_Resume.pdf`);
+        }
+    </script>
+</body>
+</html>
