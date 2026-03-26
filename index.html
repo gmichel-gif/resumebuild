@@ -552,9 +552,41 @@
 <!-- 3. Education -->
 <div class="card">
     <div class="card-title"><span class="step">3</span> Education</div>
-    <div class="field">
-        <label>School, Grade / Graduation Year, Courses or GPA</label>
-        <textarea id="education" placeholder="e.g. Lincoln High School, Class of 2026 | GPA: 3.8 | Relevant courses: AP English, Computer Science, Biology"></textarea>
+
+    <div class="exp-sub-section">
+        <div class="exp-sub-label">🏫 School Information</div>
+        <div class="row-2">
+            <div class="field">
+                <label>School Name</label>
+                <input type="text" id="edu-school" placeholder="e.g. W.T. White High School">
+            </div>
+            <div class="field">
+                <label>City / State</label>
+                <input type="text" id="edu-city" placeholder="e.g. Dallas, TX">
+            </div>
+        </div>
+        <div class="row-2" style="margin-bottom:0">
+            <div class="field" style="margin-bottom:0">
+                <label>Grade / Year</label>
+                <input type="text" id="edu-grade" placeholder="e.g. 11th Grade or Class of 2026">
+            </div>
+            <div class="field" style="margin-bottom:0">
+                <label>GPA <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <input type="text" id="edu-gpa" placeholder="e.g. 3.8 / 4.0">
+            </div>
+        </div>
+    </div>
+
+    <div class="exp-sub-section" style="margin-bottom:0">
+        <div class="exp-sub-label">📚 Courses &amp; Activities</div>
+        <div class="field">
+            <label>Relevant Courses</label>
+            <input type="text" id="edu-courses" placeholder="e.g. AP English, Biology, Computer Science, Algebra II">
+        </div>
+        <div class="field" style="margin-bottom:0">
+            <label>Clubs / Activities / Sports <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <input type="text" id="edu-activities" placeholder="e.g. Student Council, Soccer Team, Math Club">
+        </div>
     </div>
 </div>
 
@@ -896,7 +928,12 @@ async function generatePDF() {
     const phone = document.getElementById('phone').value.trim();
     const address = document.getElementById('address').value.trim();
     const objective = document.getElementById('objective').value.trim();
-    const education = document.getElementById('education').value.trim();
+    const eduSchool = document.getElementById('edu-school').value.trim();
+    const eduCity = document.getElementById('edu-city').value.trim();
+    const eduGrade = document.getElementById('edu-grade').value.trim();
+    const eduGpa = document.getElementById('edu-gpa').value.trim();
+    const eduCourses = document.getElementById('edu-courses').value.trim();
+    const eduActivities = document.getElementById('edu-activities').value.trim();
     const customSkills = document.getElementById('skills').value.trim();
     const certifications = document.getElementById('certifications').value.trim();
     const expEntries = getExpEntries();
@@ -969,10 +1006,49 @@ async function generatePDF() {
         bodyText(objective);
         y += 4;
     }
-    if (education) {
+    const hasEducation = eduSchool || eduGrade || eduGpa || eduCourses || eduActivities;
+    if (hasEducation) {
         sectionTitle("Education");
-        bodyText(education);
-        y += 4;
+        // School name + location bold, grade/year right-aligned
+        const schoolLine = [eduSchool, eduCity].filter(Boolean).join(', ');
+        if (schoolLine) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10.5);
+            doc.setTextColor(30, 25, 20);
+            doc.text(schoolLine, margin, y);
+            if (eduGrade) {
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(100, 95, 90);
+                const gw = doc.getTextWidth(eduGrade);
+                doc.text(eduGrade, pageW - margin - gw, y);
+            }
+            y += 14;
+        }
+        if (eduGpa) {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10.5);
+            doc.setTextColor(30, 25, 20);
+            doc.text('GPA: ' + eduGpa, margin, y);
+            y += 14;
+        }
+        if (eduCourses) {
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(10);
+            doc.setTextColor(80, 75, 70);
+            const courseLines = doc.splitTextToSize('Courses: ' + eduCourses, contentW);
+            doc.text(courseLines, margin, y);
+            y += courseLines.length * 13;
+        }
+        if (eduActivities) {
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(10);
+            doc.setTextColor(80, 75, 70);
+            const actLines = doc.splitTextToSize('Activities: ' + eduActivities, contentW);
+            doc.text(actLines, margin, y);
+            y += actLines.length * 13;
+        }
+        y += 6;
     }
     if (skillsText) {
         sectionTitle("Skills");
