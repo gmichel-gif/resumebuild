@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Resume Builder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f2eb;
+            --card: #ffffff;
+            --ink: #1a1714;
+            --muted: #6b6460;
+            --accent: #c84b2f;
+            --accent-light: #f5e8e4;
+            --border: #e2ddd8;
+            --tag-bg: #eef3f0;
+            --tag-border: #b5d4c1;
+            --tag-text: #2d6649;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+            padding: 40px 20px 80px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: clamp(2rem, 5vw, 3rem);
+            color: var(--ink);
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            color: var(--muted);
+            margin-top: 8px;
+            font-size: 15px;
+            font-weight: 300;
+        }
+
+        .accent-bar {
+            display: inline-block;
+            width: 40px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+            margin: 14px auto 0;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            max-width: 760px;
+            margin: 0 auto 24px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.1rem;
+            color: var(--ink);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .step {
+            background: var(--accent);
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            color: var(--ink);
+            background: #fdfcfb;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--accent);
+            background: #fff;
+        }
+
+        textarea {
+            height: 90px;
+            resize: vertical;
+        }
+
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* ---- Objective Dropdown ---- */
+        .objective-picker {
+            background: var(--accent-light);
+            border: 1.5px solid #e8c4ba;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .objective-picker p {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+
+        .obj-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .obj-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-radius: 7px;
+            border: 1.5px solid transparent;
+            background: #fff;
+            transition: border-color 0.18s, background 0.18s;
+        }
+
+        .obj-option:hover {
+            border-color: var(--accent);
+            background: #fff;
+        }
+
+        .obj-option.selected {
+            border-color: var(--accent);
+            background: #fff8f6;
+        }
+
+        .obj-option input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            accent-color: var(--accent);
+        }
+
+        .obj-option .obj-text {
+            font-size: 13px;
+            color: var(--ink);
+            line-height: 1.5;
+        }
+
+        /* ---- Skills Picker ---- */
+        .skills-picker {
+            background: #f4f8f6;
+            border: 1.5px solid var(--tag-border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .skills-picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .skills-picker-header p {
+            font-size: 12px;
+            color: var(--tag-text);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .cat-tab {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            cursor: pointer;
+            color: var(--muted);
+            transition: all 0.15s;
+        }
+
+        .cat-tab.active {
+            background: var(--tag-text);
+            color: #fff;
+            border-color: var(--tag-text);
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .skill-chip {
+            padding: 6px 13px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 400;
+            border: 1.5px solid var(--tag-border);
+            background: #fff;
+            cursor: pointer;
+            color: var(--ink);
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .skill-chip:hover {
+            background: var(--tag-bg);
+        }
+
+        .skill-chip.chosen {
+            background: var(--tag-text);
+            color: #fff;
+            border-color: var(--tag-text);
+        }
+
+        /* Selected skills display */
+        .selected-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 10px;
+            min-height: 28px;
+        }
+
+        .sel-tag {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--tag-text);
+        }
+
+        .sel-tag button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--tag-text);
+            font-size: 14px;
+            padding: 0;
+            line-height: 1;
+            opacity: 0.7;
+        }
+
+        .sel-tag button:hover { opacity: 1; }
+
+        .or-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .or-divider::before, .or-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Download button */
+        .download-wrap {
+            max-width: 760px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 48px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.01em;
+            transition: background 0.2s, transform 0.15s;
+            box-shadow: 0 4px 20px rgba(200,75,47,0.3);
+        }
+
+        .btn-download:hover {
+            background: #b03d24;
+            transform: translateY(-1px);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .hint {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 10px;
+        }
+
+        @media (max-width: 520px) {
+            .row-2 { grid-template-columns: 1fr; }
+            .card { padding: 22px; }
+        }
+
+        /* Experience entry blocks */
+        .exp-entry {
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 16px;
+            background: #fdfcfb;
+            position: relative;
+        }
+
+        .exp-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .exp-entry-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .btn-remove-entry {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 13px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            opacity: 0.7;
+            padding: 0;
+        }
+        .btn-remove-entry:hover { opacity: 1; }
+
+        .exp-sub-section {
+            background: #fafaf8;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px 16px;
+            margin-bottom: 10px;
+        }
+
+        .exp-sub-section--dates {
+            background: #f4f8f6;
+            border-color: var(--tag-border);
+        }
+
+        .exp-sub-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .btn-add-entry {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            padding: 9px 18px;
+            border: 1.5px dashed var(--border);
+            background: transparent;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-add-entry:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* CI North picker */
+        .cin-picker {
+            background: #f0f4ff;
+            border: 1.5px solid #bfcfee;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .cin-picker > p:first-child {
+            font-size: 12px;
+            color: #3a5bbf;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .cin-sub {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 12px !important;
+        }
+
+        /* Date picker */
+        .date-picker-wrap {
+            display: flex;
+            gap: 8px;
+        }
+
+        .date-select {
+            flex: 1;
+            padding: 10px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            color: var(--ink);
+            background: #fdfcfb;
+            cursor: pointer;
+            appearance: auto;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .date-select:focus {
+            border-color: var(--accent);
+        }
+
+        .date-select option[value="Present"] {
+            font-weight: 600;
+            color: var(--tag-text);
+        }
+
+
+        /* Bilingual labels */
+        .trans {
+            display: block;
+            font-size: 10px;
+            font-weight: 400;
+            color: var(--accent);
+            text-transform: none;
+            letter-spacing: 0.01em;
+            margin-top: 1px;
+            font-style: italic;
+            opacity: 0.85;
+        }
+
+        .card-title .trans {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-style: italic;
+            font-weight: 300;
+            color: rgba(200,75,47,0.75);
+            margin-left: 4px;
+        }
+
+        .exp-sub-label .trans {
+            font-size: 9px;
+            font-style: italic;
+            font-weight: 400;
+            color: var(--muted);
+            margin-left: 4px;
+        }
+
+        .section-trans {
+            display: block;
+            font-size: 11px;
+            font-style: italic;
+            font-weight: 300;
+            color: rgba(200,75,47,0.7);
+            font-family: 'DM Sans', sans-serif;
+            margin-top: 2px;
+        }
+
+
+        body {--bg:#edf2f7;--accent:#214e83;--accent-light:#e8f0fb;--border:#ccd6e0;}
+        header p,.helper {font-size:1rem;line-height:1.6;}
+        .trans,.section-trans,.exp-sub-label .trans,.card-title .trans {font-size:.875rem;color:#365575;opacity:1;}
+        label {font-size:.875rem;}
+        input,textarea,select {font-size:1rem !important;}
+        .card-title {flex-wrap:wrap;font-size:1.3rem;}
+        button.skill-chip {font-family:inherit;font-size:.875rem;min-height:44px;text-align:left;}
+        button:focus-visible,a:focus-visible {outline:3px solid #b35416;outline-offset:3px;}
+        .helper {margin:12px 0;color:#465366;}
+        [hidden] {display:none !important;}
+        [aria-invalid="true"] {border:2px solid #b92323 !important;}
+        #errors {border:2px solid #b92323;color:#8f1717;}
+        #errors a {color:inherit;}
+        #resume-preview {background:white;padding:24px 8px;color:#171717;overflow-wrap:anywhere;line-height:1.5;}
+        #resume-preview h2 {font-family:inherit;font-size:1.8rem;}
+        #resume-preview h3 {font-size:1rem;text-transform:uppercase;border-bottom:1px solid #888;margin:20px 0 8px;}
+        #resume-preview h4 {margin:12px 0 3px;}
+        #resume-preview p {margin:5px 0;white-space:pre-wrap;}
+        #resume-preview ul {padding-left:22px;margin:6px 0;}
+        .preview-card h2 {font-size:1.3rem;}
+        @media(max-width:600px){body{padding:24px 12px 48px;}.card{padding:20px;}.row-2{grid-template-columns:1fr;}.btn-download{width:100%;}.card-title{gap:8px;}#resume-preview{padding:16px 0;}}
+        @media print {
+          @page {size:letter;margin:.6in;}
+          body {padding:0;background:white;}
+          body > :not(.preview-card) {display:none !important;}
+          .preview-card {display:block;border:0;box-shadow:none;max-width:none;padding:0;margin:0;}
+          .preview-card > :not(#resume-preview) {display:none;}
+          #resume-preview {padding:0;font-family:Arial,sans-serif;font-size:11pt;}
+          #resume-preview h3,#resume-preview h4 {break-after:avoid;}
+          #resume-preview li {break-inside:avoid;}
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Student Resume Builder</h1>
+    <p>Build a polished resume in minutes — designed for high school students</p>
+    <div class="accent-bar"></div>
+</header>
+
+<!-- 1. Contact Info -->
+<div class="card">
+    <div class="card-title"><span class="step">1</span> Contact Information<span class="section-trans">Información de Contacto</span></div>
+    <div class="row-2">
+        <div class="field">
+            <label>Full Name * <span class="trans">Nombre Completo</span></label>
+            <input type="text" id="name" placeholder="Jane Smith">
+        </div>
+        <div class="field">
+            <label>Email * <span class="trans">Correo Electrónico</span></label>
+            <input type="email" id="email" placeholder="jane@email.com">
+        </div>
+    </div>
+    <div class="row-2">
+        <div class="field">
+            <label>Phone <span class="trans">Teléfono</span></label>
+            <input type="text" id="phone" placeholder="(555) 123-4567">
+        </div>
+        <div class="field">
+            <label>City / State <span class="trans">Ciudad / Estado</span></label>
+            <input type="text" id="address" placeholder="Dallas, TX">
+        </div>
+    </div>
+</div>
+
+<!-- 2. Objective -->
+<div class="card">
+    <div class="card-title"><span class="step">2</span> Objective / Summary<span class="section-trans">Objetivo / Resumen</span></div>
+
+    <div class="objective-picker">
+        <p>✦ Quick-fill templates — click one to use it <span style="font-style:italic;font-weight:300">/ Plantillas rápidas — haz clic para usarlas</span></p>
+        <div class="obj-options" id="objOptions">
+            <label class="obj-option" onclick="selectObjective(this)">
+                <input type="radio" name="obj" value="">
+                <span class="obj-text">A motivated high school student seeking a part-time position to develop professional skills and contribute positively to a team environment.</span>
+            </label>
+            <label class="obj-option" onclick="selectObjective(this)">
+                <input type="radio" name="obj" value="">
+                <span class="obj-text">Enthusiastic and hard-working student looking for a volunteer or internship opportunity to gain real-world experience while making a meaningful impact in my community.</span>
+            </label>
+            <label class="obj-option" onclick="selectObjective(this)">
+                <input type="radio" name="obj" value="">
+                <span class="obj-text">Detail-oriented student with a passion for learning, seeking a summer job or part-time role where I can apply my classroom knowledge and grow professionally.</span>
+            </label>
+            <label class="obj-option" onclick="selectObjective(this)">
+                <input type="radio" name="obj" value="">
+                <span class="obj-text">Goal-driven high school student with strong communication and teamwork skills, eager to contribute to an organization while building career-ready experience.</span>
+            </label>
+            <label class="obj-option" onclick="selectObjective(this)">
+                <input type="radio" name="obj" value="">
+                <span class="obj-text">Creative and curious student pursuing opportunities in the arts, media, or technology to explore my interests and develop a professional portfolio.</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="or-divider">or write your own / <em>o escribe el tuyo</em></div>
+
+    <div class="field">
+        <label>Custom Objective <span class="trans">Objetivo Personalizado</span></label>
+        <textarea id="objective" placeholder="Write a short summary about yourself and your goals..."></textarea>
+    </div>
+</div>
+
+<!-- 3. Education -->
+<div class="card">
+    <div class="card-title"><span class="step">3</span> Education<span class="section-trans">Educación</span></div>
+
+    <div class="exp-sub-section">
+        <div class="exp-sub-label">🏫 School Information <span class="trans">Información Escolar</span></div>
+        <div class="row-2">
+            <div class="field">
+                <label>School Name <span class="trans">Nombre de la Escuela</span></label>
+                <select id="edu-school" class="date-select" style="width:100%">
+                    <option value="">Select your school / Selecciona tu escuela</option>
+                    <option>Conrad High School</option>
+                    <option>Hillcrest High School</option>
+                    <option>North Dallas High School</option>
+                    <option>Thomas Jefferson High School</option>
+                    <option>W.T. White High School</option><option value="Other">Other / Otra escuela</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>City / State <span class="trans">Ciudad / Estado</span></label>
+                <input type="text" id="edu-city" placeholder="e.g. Dallas, TX">
+            </div>
+        </div>
+        <div class="row-2" style="margin-bottom:0">
+            <div class="field" style="margin-bottom:0">
+                <label>Grade / Year <span class="trans">Grado / Año</span></label>
+                <select id="edu-grade" class="date-select" style="width:100%">
+                    <option value="">Select grade / Selecciona grado</option>
+                    <option value="Junior — 11th Grade">Junior — 11th Grade / 11° Grado</option>
+                    <option value="Senior — 12th Grade">Senior — 12th Grade / 12° Grado</option>
+                </select>
+            </div>
+            <div class="field" style="margin-bottom:0">
+                <label>GPA <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span><span class="trans">Promedio (opcional)</span></label>
+                <input type="text" id="edu-gpa" placeholder="e.g. 3.8 / 4.0">
+            </div>
+        </div>
+    </div>
+
+    <div class="exp-sub-section" style="margin-bottom:0">
+        <div class="exp-sub-label">📚 Courses &amp; Activities <span class="trans">Cursos y Actividades</span></div>
+        <div class="field">
+            <label>Relevant Courses <span class="trans">Cursos Relevantes</span></label>
+            <input type="text" id="edu-courses" placeholder="e.g. AP English, Biology, Computer Science, Algebra II">
+        </div>
+        <div class="field" style="margin-bottom:0">
+            <label>Clubs / Activities / Sports <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span><span class="trans">Clubes / Actividades / Deportes (opcional)</span></label>
+            <input type="text" id="edu-activities" placeholder="e.g. Student Council, Soccer Team, Math Club">
+        </div>
+    </div>
+</div>
+
+<div class="card">
+<h2>Class projects &amp; hands-on training <span class="section-trans">Proyectos de clase y práctica</span></h2>
+<p class="helper">No job yet? Include a lab, team project, school leadership, or family responsibilities. Describe what you actually did. / Incluye lo que realmente hiciste.</p>
+<label for="projects">Projects and contributions / Proyectos y contribuciones</label>
+<textarea id="projects" placeholder="Example: Built a small wooden frame with a team of four; measured materials and followed shop safety procedures. Use one contribution per line."></textarea>
+</div>
+<!-- 4. Skills -->
+<div class="card">
+    <div class="card-title"><span class="step">4</span> Skills<span class="section-trans">Habilidades</span></div>
+
+    <div class="skills-picker">
+        <div class="skills-picker-header">
+            <p>✦ Pick from common skills <span style="font-style:italic;font-weight:300">/ Elige habilidades comunes</span></p>
+        </div>
+
+        <div class="category-tabs">
+            <button class="cat-tab active" onclick="showCat(this, 'all')">All</button>
+            <button class="cat-tab" onclick="showCat(this, 'tech')">Technology</button>
+            <button class="cat-tab" onclick="showCat(this, 'people')">People Skills</button>
+            <button class="cat-tab" onclick="showCat(this, 'academic')">Academic</button>
+            <button class="cat-tab" onclick="showCat(this, 'creative')">Creative</button>
+            <button class="cat-tab" onclick="showCat(this, 'work')">Work Readiness</button>
+        </div>
+
+        <div class="skills-grid" id="skillsGrid"></div>
+    </div>
+
+    <div class="selected-skills" id="selectedSkillsDisplay"></div>
+
+    <div class="or-divider">or add your own / <em>o agrega las tuyas</em></div>
+
+    <div class="field">
+        <label>Custom Skills (comma-separated) <span class="trans">Habilidades personalizadas (separadas por coma)</span></label>
+        <textarea id="skills" placeholder="e.g. Bilingual (Spanish/English), Photography, 3D Printing..."></textarea>
+    </div>
+</div>
+
+<!-- 5. Experience -->
+<div class="card">
+    <div class="card-title"><span class="step">5</span> Experience / Work / Volunteer<span class="section-trans">Experiencia / Trabajo / Voluntariado</span></div>
+    <div id="expEntries"></div>
+    <button type="button" class="btn-add-entry" onclick="addExpEntry()">+ Add Another Position</button>
+</div>
+
+<!-- 6. Certifications -->
+<div class="card">
+    <div class="card-title"><span class="step">6</span> Career Training, Certifications &amp; Awards<span class="section-trans">Formación, Certificaciones y Premios</span> <span style="font-family:'DM Sans';font-weight:300;font-size:13px;color:var(--muted)">(optional)</span></div>
+
+    <div class="cin-picker">
+        <p>✦ Dallas ISD Career Institute North — Programs of Study <span style="font-style:italic;font-weight:300">/ Programas de Estudio</span></p>
+        <p class="cin-sub">Select your program if you attended CI North / <em>Selecciona tu programa si asististe al CI North</em></p>
+        <div class="skills-grid" id="cinGrid"></div>
+    </div>
+
+    <div style="margin-top:10px;" class="selected-skills" id="cinSelectedDisplay"></div>
+
+    <div class="or-divider">certifications you have earned / <em>certificaciones que ya obtuviste</em></div>
+
+    <div class="field">
+        <label>Certifications Earned, Awards & Honors <span class="trans">Certificaciones Obtenidas, Premios y Honores</span></label>
+        <textarea id="certifications" placeholder="e.g. CPR Certified, Honor Roll 2023–2024, National Honor Society, AP Scholar"></textarea>
+    </div>
+</div>
+
+<section class="card preview-card" aria-labelledby="preview-heading">
+<h2 id="preview-heading">Resume preview <span class="section-trans">Vista previa del currículum</span></h2>
+<p id="review-note" class="helper"></p><article id="resume-preview"></article>
+</section>
+<div id="errors" class="card" role="alert" hidden></div>
+<div class="download-wrap">
+    <button class="btn-download" onclick="generatePDF()">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12v6m0 0l-3-3m3 3l3-3M12 3v9"/></svg>
+        Download PDF Resume
+    </button>
+    <button type="button" class="btn-add-entry" onclick="updatePreview();window.print()">Print / Save as PDF · Imprimir / Guardar como PDF</button>
+    <p class="hint">Your resume is created in this browser. No resume data is uploaded. External fonts and the PDF library require internet. / Tu currículum se crea en este navegador.</p>
+</div>
+
+<script>
+// ---- Skill data ----
+const skillData = [
+    { label: "Microsoft Word", cat: "tech" },
+    { label: "Microsoft Excel", cat: "tech" },
+    { label: "Google Docs", cat: "tech" },
+    { label: "PowerPoint / Slides", cat: "tech" },
+    { label: "Typing (WPM)", cat: "tech" },
+    { label: "Social Media", cat: "tech" },
+    { label: "Basic Coding (HTML/CSS)", cat: "tech" },
+    { label: "Python Basics", cat: "tech" },
+    { label: "Canva / Design Tools", cat: "tech" },
+    { label: "Email Communication", cat: "tech" },
+    { label: "Teamwork", cat: "people" },
+    { label: "Communication", cat: "people" },
+    { label: "Leadership", cat: "people" },
+    { label: "Customer Service", cat: "people" },
+    { label: "Conflict Resolution", cat: "people" },
+    { label: "Active Listening", cat: "people" },
+    { label: "Public Speaking", cat: "people" },
+    { label: "Empathy", cat: "people" },
+    { label: "Peer Tutoring", cat: "people" },
+    { label: "Mentoring", cat: "people" },
+    { label: "Research & Analysis", cat: "academic" },
+    { label: "Critical Thinking", cat: "academic" },
+    { label: "Note-Taking", cat: "academic" },
+    { label: "Essay Writing", cat: "academic" },
+    { label: "Mathematics", cat: "academic" },
+    { label: "Science Lab Skills", cat: "academic" },
+    { label: "Foreign Language", cat: "academic" },
+    { label: "Study Skills", cat: "academic" },
+    { label: "Graphic Design", cat: "creative" },
+    { label: "Photography", cat: "creative" },
+    { label: "Video Editing", cat: "creative" },
+    { label: "Drawing / Illustration", cat: "creative" },
+    { label: "Music Performance", cat: "creative" },
+    { label: "Creative Writing", cat: "creative" },
+    { label: "Acting / Drama", cat: "creative" },
+    { label: "Crafting & DIY", cat: "creative" },
+    { label: "Time Management", cat: "work" },
+    { label: "Attention to Detail", cat: "work" },
+    { label: "Reliability / Punctuality", cat: "work" },
+    { label: "Problem Solving", cat: "work" },
+    { label: "Multitasking", cat: "work" },
+    { label: "Cash Handling", cat: "work" },
+    { label: "Inventory & Stocking", cat: "work" },
+    { label: "Teamwork Under Pressure", cat: "work" },
+    { label: "Following Instructions", cat: "work" },
+    { label: "Organization", cat: "work" },
+];
+
+// ---- CI North Programs of Study ----
+const cinPrograms = [
+    "Architecture",
+    "Interior Design",
+    "Automotive Technician",
+    "Aviation / Drone",
+    "Construction & Carpentry",
+    "Culinary Arts",
+    "Cybersecurity",
+    "Dental Assistant",
+    "EKG Technician",
+    "Electrical Technology",
+    "Emergency Medical Technician (EMT)",
+    "Health Science",
+    "Heating, Ventilation & Air Conditioning (HVAC)",
+    "Electronics / Mechatronics",
+    "IT / Networking",
+    "Patient Care Technician",
+    "Pharmacy",
+    "Phlebotomy",
+    "Plumbing",
+    "Programming & Software Development",
+    "Robotics",
+    "Building Maintenance",
+    "Welding",
+];
+
+let selectedSkills = new Set();
+let selectedCIN = new Set();
+let currentCat = 'all';
+
+// ---- Skills Grid ----
+function buildGrid(cat) {
+    const grid = document.getElementById('skillsGrid');
+    grid.innerHTML = '';
+    const filtered = cat === 'all' ? skillData : skillData.filter(s => s.cat === cat);
+    filtered.forEach(skill => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.setAttribute('aria-pressed', 'false');
+        chip.className = 'skill-chip' + (selectedSkills.has(skill.label) ? ' chosen' : '');
+        chip.setAttribute('aria-pressed', String(selectedSkills.has(skill.label)));
+        chip.textContent = skill.label;
+        chip.onclick = () => toggleSkill(skill.label, chip);
+        grid.appendChild(chip);
+    });
+}
+
+function toggleSkill(label, chip) {
+    if (selectedSkills.has(label)) {
+        selectedSkills.delete(label);
+        chip.classList.remove('chosen');
+    } else {
+        selectedSkills.add(label);
+        chip.classList.add('chosen');
+    }
+    chip.setAttribute('aria-pressed', String(selectedSkills.has(label)));
+    renderSelectedTags();
+}
+
+function renderSelectedTags() {
+    const wrap = document.getElementById('selectedSkillsDisplay');
+    wrap.innerHTML = '';
+    selectedSkills.forEach(label => {
+        const tag = document.createElement('div');
+        tag.className = 'sel-tag';
+        tag.innerHTML = `${label} <button onclick="removeSkill('${label}')">×</button>`;
+        wrap.appendChild(tag);
+    });
+}
+
+function removeSkill(label) {
+    selectedSkills.delete(label);
+    renderSelectedTags();
+    buildGrid(currentCat);
+}
+
+function showCat(btn, cat) {
+    document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCat = cat;
+    buildGrid(cat);
+}
+
+// ---- CI North Grid ----
+function buildCINGrid() {
+    const grid = document.getElementById('cinGrid');
+    grid.innerHTML = '';
+    cinPrograms.forEach(prog => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.setAttribute('aria-pressed', 'false');
+        chip.className = 'skill-chip' + (selectedCIN.has(prog) ? ' chosen' : '');
+        chip.style.borderColor = selectedCIN.has(prog) ? '#3a5bbf' : '#bfcfee';
+        chip.style.background = selectedCIN.has(prog) ? '#3a5bbf' : '#fff';
+        chip.style.color = selectedCIN.has(prog) ? '#fff' : 'var(--ink)';
+        chip.setAttribute('aria-pressed', String(selectedCIN.has(prog)));
+        chip.textContent = prog;
+        chip.onclick = () => toggleCIN(prog);
+        grid.appendChild(chip);
+    });
+}
+
+function toggleCIN(prog) {
+    if (selectedCIN.has(prog)) {
+        selectedCIN.delete(prog);
+    } else {
+        selectedCIN.add(prog);
+    }
+    buildCINGrid();
+    renderCINTags();
+}
+
+function renderCINTags() {
+    const wrap = document.getElementById('cinSelectedDisplay');
+    wrap.innerHTML = '';
+    selectedCIN.forEach(prog => {
+        const tag = document.createElement('div');
+        tag.className = 'sel-tag';
+        tag.style.borderColor = '#bfcfee';
+        tag.style.color = '#3a5bbf';
+        tag.style.background = '#eef1fb';
+        tag.innerHTML = `CI North: ${prog} <button style="color:#3a5bbf" onclick="removeCIN('${prog.replace(/'/g,"\\'")}')">×</button>`;
+        wrap.appendChild(tag);
+    });
+}
+
+function removeCIN(prog) {
+    selectedCIN.delete(prog);
+    buildCINGrid();
+    renderCINTags();
+}
+
+// ---- Date picker helpers ----
+function populateYears(selectEl, includeBlank=true) {
+    const currentYear = new Date().getFullYear();
+    selectEl.innerHTML = '';
+    if (includeBlank) {
+        const blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = 'Year';
+        selectEl.appendChild(blank);
+    }
+    for (let y = currentYear + 1; y >= currentYear - 10; y--) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        selectEl.appendChild(opt);
+    }
+}
+
+function syncDateHidden(id, startOrEnd) {
+    const month = document.getElementById(`exp-${startOrEnd}-month-${id}`)?.value || '';
+    const year = document.getElementById(`exp-${startOrEnd}-year-${id}`)?.value || '';
+    const hidden = document.getElementById(`exp-${startOrEnd}-${id}`);
+    if (!hidden) return;
+    if (month === 'Present') {
+        hidden.value = 'Present';
+    } else {
+        hidden.value = [month, year].filter(Boolean).join(' ');
+    }
+}
+
+function handleEndMonthChange(sel, id) {
+    const yearSel = document.getElementById(`exp-end-year-${id}`);
+    if (sel.value === 'Present') {
+        yearSel.style.display = 'none';
+    } else {
+        yearSel.style.display = '';
+    }
+    syncDateHidden(id, 'end');
+}
+
+function initDatePickers(id) {
+    ['start', 'end'].forEach(se => {
+        const yearSel = document.getElementById(`exp-${se}-year-${id}`);
+        if (yearSel) populateYears(yearSel);
+        const monthSel = document.getElementById(`exp-${se}-month-${id}`);
+        if (monthSel) {
+            monthSel.addEventListener('change', () => syncDateHidden(id, se));
+        }
+        if (yearSel) {
+            yearSel.addEventListener('change', () => syncDateHidden(id, se));
+        }
+    });
+}
+
+// ---- Experience Entries ----
+let expCount = 0;
+
+function addExpEntry() {
+    expCount++;
+    const id = expCount;
+    const wrap = document.getElementById('expEntries');
+    const div = document.createElement('div');
+    div.className = 'exp-entry';
+    div.id = `exp-${id}`;
+    div.innerHTML = `
+        <div class="exp-entry-header">
+            <span class="exp-entry-label">Position ${id} <span class="trans" style="font-style:italic">Posición</span></span>
+            ${id > 1 ? `<button class="btn-remove-entry" onclick="removeExpEntry(${id})">Remove</button>` : ''}
+        </div>
+
+        <div class="exp-sub-section">
+            <div class="exp-sub-label">📋 Position Held <span class="trans">Puesto Desempeñado</span></div>
+            <div class="row-2">
+                <div class="field">
+                    <label>Job Title / Role <span class=\"trans\">Título / Puesto</span></label>
+                    <input type="text" id="exp-role-${id}" placeholder="e.g. Cashier, Volunteer, Intern">
+                </div>
+                <div class="field">
+                    <label>Organization / Company <span class=\"trans\">Organización / Empresa</span></label>
+                    <input type="text" id="exp-org-${id}" placeholder="e.g. Walmart, Food Bank Dallas">
+                </div>
+            </div>
+            <div class="field" style="margin-bottom:0">
+                <label>Description <span class=\"trans\">Descripción</span></label>
+                <textarea id="exp-desc-${id}" placeholder="One contribution per line. Example: Helped 20 customers per shift and kept the checkout area organized. / Una contribución por línea."></textarea>
+            </div>
+        </div>
+
+        <div class="exp-sub-section exp-sub-section--dates">
+            <div class="exp-sub-label">📅 Timeframe <span class="trans">Período de Tiempo</span></div>
+            <div class="row-2">
+                <div class="field" style="margin-bottom:0">
+                    <label>Start Date <span class=\"trans\">Fecha de Inicio</span></label>
+                    <div class="date-picker-wrap">
+                        <select id="exp-start-month-${id}" class="date-select">
+                            <option value="">Month</option>
+                            <option>January</option><option>February</option><option>March</option>
+                            <option>April</option><option>May</option><option>June</option>
+                            <option>July</option><option>August</option><option>September</option>
+                            <option>October</option><option>November</option><option>December</option>
+                        </select>
+                        <select id="exp-start-year-${id}" class="date-select"></select>
+                    </div>
+                    <input type="hidden" id="exp-start-${id}">
+                </div>
+                <div class="field" style="margin-bottom:0">
+                    <label>End Date <span class=\"trans\">Fecha de Fin</span></label>
+                    <div class="date-picker-wrap">
+                        <select id="exp-end-month-${id}" class="date-select" onchange="handleEndMonthChange(this, ${id})">
+                            <option value="">Month</option>
+                            <option value="Present">Present</option>
+                            <option>January</option><option>February</option><option>March</option>
+                            <option>April</option><option>May</option><option>June</option>
+                            <option>July</option><option>August</option><option>September</option>
+                            <option>October</option><option>November</option><option>December</option>
+                        </select>
+                        <select id="exp-end-year-${id}" class="date-select"></select>
+                    </div>
+                    <input type="hidden" id="exp-end-${id}">
+                </div>
+            </div>
+        </div>
+    `;
+    wrap.appendChild(div);
+    initDatePickers(id);
+}
+
+function removeExpEntry(id) {
+    const el = document.getElementById(`exp-${id}`);
+    if (el) el.remove();
+}
+
+function getExpEntries() {
+    const entries = [];
+    document.querySelectorAll('.exp-entry').forEach(el => {
+        const id = el.id.replace('exp-', '');
+        const role = (document.getElementById(`exp-role-${id}`)?.value || '').trim();
+        const org = (document.getElementById(`exp-org-${id}`)?.value || '').trim();
+        const start = (document.getElementById(`exp-start-${id}`)?.value || '').trim();
+        const end = (document.getElementById(`exp-end-${id}`)?.value || '').trim();
+        const desc = (document.getElementById(`exp-desc-${id}`)?.value || '').trim();
+        if (role || org || desc) {
+            entries.push({ role, org, start, end, desc });
+        }
+    });
+    return entries;
+}
+
+function selectObjective(el) {
+    document.querySelectorAll('.obj-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    const text = el.querySelector('.obj-text').textContent;
+    document.getElementById('objective').value = text;
+}
+
+// Init
+buildGrid('all');
+buildCINGrid();
+addExpEntry();
+
+// ---- Accessible preview and PDF export ----
+const value = id => (document.getElementById(id)?.value || '').trim();
+const linesOf = text => text.split('\n').map(t => t.replace(/^[•*\-]\s*/, '').trim()).filter(Boolean);
+function resumeData() {
+    const custom = value('skills').split(',').map(t => t.trim()).filter(Boolean);
+    const skills = [...selectedSkills, ...custom].filter((t,i,a) => a.findIndex(x => x.toLowerCase() === t.toLowerCase()) === i);
+    const school = value('edu-school') === 'Other' ? value('other-school') : value('edu-school');
+    const sections = [];
+    if (value('objective')) sections.push({title:'Objective', paragraphs:[value('objective')]});
+    if (school || value('edu-grade') || value('graduation') || selectedCIN.size || value('edu-courses') || value('edu-activities') || value('edu-gpa')) {
+        const paragraphs = [school, [value('edu-city'), value('edu-grade')].filter(Boolean).join(' | '), value('graduation') && 'Expected graduation: ' + value('graduation'), value('edu-gpa') && 'GPA: ' + value('edu-gpa'), value('edu-courses') && 'Relevant courses: ' + value('edu-courses'), value('edu-activities') && 'Activities: ' + value('edu-activities')].filter(Boolean);
+        if (selectedCIN.size) paragraphs.push('Career Institute North — Career training: ' + [...selectedCIN].join('; '));
+        sections.push({title:'Education & Career Training', paragraphs});
+    }
+    if (skills.length) sections.push({title:'Skills', paragraphs:[skills.join(' • ')]});
+    if (value('projects')) sections.push({title:'Projects & Hands-on Training', bullets:linesOf(value('projects'))});
+    const entries = getExpEntries();
+    if (entries.length) sections.push({title:'Experience & Volunteer Work', entries});
+    if (value('certifications')) sections.push({title:'Certifications & Awards', bullets:linesOf(value('certifications'))});
+    return {name:value('name'),contact:[value('phone'),value('email'),value('address')].filter(Boolean).join(' | '),sections};
+}
+function validateResume() {
+    document.querySelectorAll('[aria-invalid]').forEach(el => el.removeAttribute('aria-invalid'));
+    const problems = [];
+    if (!value('name')) problems.push(['name','Enter your full name. / Escribe tu nombre completo.']);
+    const email = document.getElementById('email');
+    if (!value('email') || !email.validity.valid) problems.push(['email','Enter a valid email address. / Escribe un correo válido.']);
+    if (value('edu-school') === 'Other' && !value('other-school')) problems.push(['other-school','Enter your school name. / Escribe tu escuela.']);
+    document.querySelectorAll('.exp-entry').forEach(el => {
+        const id = el.id.replace('exp-', '');
+        const startMonth = value('exp-start-month-'+id), startYear = value('exp-start-year-'+id);
+        const endMonth = value('exp-end-month-'+id), endYear = value('exp-end-year-'+id);
+        if (!!startMonth !== !!startYear) problems.push(['exp-start-month-'+id,'Complete the start month and year. / Completa mes y año de inicio.']);
+        if (endMonth !== 'Present' && (!!endMonth !== !!endYear)) problems.push(['exp-end-month-'+id,'Complete the end month and year. / Completa mes y año de fin.']);
+        if (startMonth && startYear && endMonth && endYear && endMonth !== 'Present' && new Date(endMonth+' 1, '+endYear) < new Date(startMonth+' 1, '+startYear)) problems.push(['exp-end-month-'+id,'End date must follow the start date. / La fecha final debe ser posterior al inicio.']);
+    });
+    const box = document.getElementById('errors'); box.replaceChildren();
+    problems.forEach(([id,message]) => {
+        document.getElementById(id).setAttribute('aria-invalid','true');
+        const p = document.createElement('p'); const a = document.createElement('a'); a.href='#'+id; a.textContent=message;
+        a.onclick = e => {e.preventDefault(); document.getElementById(id).focus();}; p.append(a); box.append(p);
+    });
+    box.hidden = !problems.length;
+    if (problems.length) document.getElementById(problems[0][0]).focus();
+    return !problems.length;
+}
+function updatePreview() {
+    const data = resumeData(), root = document.getElementById('resume-preview'); root.replaceChildren();
+    const add = (tag,text,parent=root) => {const node=document.createElement(tag); node.textContent=text;parent.append(node);return node;};
+    add('h2',data.name || 'Your name / Tu nombre'); add('p',data.contact || 'Your contact details / Tus datos de contacto');
+    data.sections.forEach(section => {
+        add('h3',section.title);
+        (section.paragraphs || []).forEach(t => add('p',t));
+        if (section.bullets) {const ul=add('ul','');section.bullets.forEach(t=>add('li',t,ul));}
+        (section.entries || []).forEach(entry => {
+            add('h4',[entry.role,entry.org].filter(Boolean).join(' — '));
+            const dates=[entry.start,entry.end].filter(Boolean).join(' – ');if(dates)add('p',dates);
+            const ul=add('ul','');linesOf(entry.desc).forEach(t=>add('li',t,ul));
+        });
+    });
+    document.getElementById('review-note').textContent = data.sections.length ? 'Review spelling, dates, and every skill. Include only certifications you have earned. / Revisa ortografía, fechas y habilidades. Incluye solo certificaciones obtenidas.' : 'Add your information to build your preview. / Agrega tus datos para ver tu currículum.';
+}
+async function generatePDF() {
+    if (!validateResume()) return;
+    if (!window.jspdf?.jsPDF) {
+        const box=document.getElementById('errors'); box.hidden=false;box.textContent='The PDF library could not load. Connect to the internet and reload, or use Print / Save as PDF. / No se cargó la herramienta PDF. Usa Imprimir / Guardar como PDF.'; return;
+    }
+    const data=resumeData(), doc=new window.jspdf.jsPDF({unit:'pt',format:'letter'});
+    const left=44, width=524, top=48, bottom=744;let y=top;
+    // Draw one wrapped line at a time so very long content can span pages safely.
+    function room(height) {if(y+height>bottom){doc.addPage();y=top;}}
+    function text(content,size=11,bold=false,indent=0) {
+        doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(25,25,25);
+        const lines=doc.splitTextToSize(content,width-indent), leading=size*1.35;
+        lines.forEach(line=>{room(leading);doc.text(line,left+indent,y);y+=leading;});
+    }
+    function bullet(content) {
+        doc.setFont('helvetica','normal');doc.setFontSize(11);
+        const lines=doc.splitTextToSize(content,width-13);lines.forEach((line,i)=>{room(15);if(i===0){doc.setFillColor(25,25,25);doc.circle(left+3,y-3,1.5,'F');}doc.text(line,left+13,y);y+=15;});y+=2;
+    }
+    text(data.name,25,true);text(data.contact,10);y+=9;
+    data.sections.forEach(section=>{
+        room(58);y+=8;text(section.title.toUpperCase(),12,true);
+        doc.setDrawColor(170);doc.line(left,y-6,left+width,y-6);y+=5;
+        (section.paragraphs||[]).forEach(t=>{text(t);y+=3;});
+        (section.bullets||[]).forEach(bullet);
+        (section.entries||[]).forEach(e=>{room(48);text([e.role,e.org].filter(Boolean).join(' — '),11,true);const dates=[e.start,e.end].filter(Boolean).join(' – ');if(dates)text(dates,10);linesOf(e.desc).forEach(bullet);y+=6;});y+=4;
+    });
+    const pages=doc.getNumberOfPages();if(pages>1)for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(100);doc.text(i+' / '+pages,568,768,{align:'right'});}
+    const filename=data.name.replace(/[^a-zA-Z0-9À-ÿ_-]+/g,'_') || 'Student';doc.save(filename+'_Resume.pdf');
+}
+// Extra education fields.
+const schoolSelect=document.getElementById('edu-school');
+const schoolField=document.createElement('div');schoolField.className='field';schoolField.hidden=true;
+schoolField.innerHTML='<label for="other-school">Your school / Tu escuela</label><input id="other-school" type="text">';schoolSelect.closest('.field').after(schoolField);
+schoolSelect.addEventListener('change',()=>{schoolField.hidden=schoolSelect.value!=='Other';});
+const gradField=document.createElement('div');gradField.className='field';
+gradField.innerHTML='<label for="graduation">Expected graduation / Graduación prevista</label><input id="graduation" placeholder="May 2027 / Mayo 2027">';
+document.getElementById('edu-grade').closest('.row-2').after(gradField);
+// Associate labels with controls, including dynamically added experience fields.
+function wireLabels() {
+    document.querySelectorAll('.field').forEach(field=>{const label=field.querySelector('label'), input=field.querySelector('input:not([type="hidden"]),textarea,select');if(label&&input&&input.id){label.htmlFor=input.id;}
+        field.querySelectorAll('.date-picker-wrap select').forEach((select,i)=>select.setAttribute('aria-label',label.textContent.trim()+(i?' — Year / Año':' — Month / Mes')));
+    });
+}
+new MutationObserver(()=>wireLabels()).observe(document.getElementById('expEntries'),{childList:true});wireLabels();
+document.getElementById('name').autocomplete='name';document.getElementById('email').autocomplete='email';document.getElementById('phone').type='tel';
+document.getElementById('name').required=true;document.getElementById('email').required=true;
+document.addEventListener('input',updatePreview);document.addEventListener('change',updatePreview);
+document.addEventListener('click',()=>queueMicrotask(updatePreview));
+document.getElementById('objective').addEventListener('input',()=>{document.querySelectorAll('.obj-option').forEach(o=>o.classList.remove('selected'));document.querySelectorAll('input[name="obj"]').forEach(o=>o.checked=false);});
+updatePreview();
+</script>
+</body>
+</html>
